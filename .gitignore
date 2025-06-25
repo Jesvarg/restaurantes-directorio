@@ -1,0 +1,78 @@
+/.phpunit.cache
+# Dependencies
+/node_modules
+/vendor
+composer.phar
+
+# Laravel specific
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*
+
+# Environment files
+.env
+.env.backup
+.env.production
+.env.local
+.env.testing
+
+# Database
+*.sqlite
+*.sqlite3
+/database/database.sqlite
+
+# Testing
+.phpunit.result.cache
+/coverage
+
+# IDE and Editor files
+/.fleet
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log
+yarn-error.log
+*.log
+
+# Deployment
+Homestead.json
+Homestead.yaml
+auth.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Uploads (if you have file uploads)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Cache
+/storage/app/cache/*
+/storage/framework/cache/data/*
+
+# Compiled assets
+/public/css/app.css
+/public/js/app.js
+/public/mix-manifest.json

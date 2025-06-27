@@ -180,44 +180,9 @@ Modifica el archivo `.env` para personalizar:
 
 ## Funcionalidades Futuras
 
+- [ ] Integración de Chatbot
 - [ ] Sistema de notificaciones por email
 - [ ] Integración con mapas (Google Maps/OpenStreetMap)
 - [ ] Sistema de reservas
-- [ ] Chat entre usuarios y restaurantes
-- [ ] API REST para aplicaciones móviles
-- [ ] Panel de administración
-- [ ] Estadísticas y analytics
 - [ ] Sistema de cupones y descuentos
 - [ ] Integración con redes sociales
-- [ ] Búsqueda por geolocalización
-
-## Contribuir
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## Soporte
-
-Si encuentras algún problema o tienes preguntas:
-
-1. Revisa la documentación
-2. Busca en los issues existentes
-3. Crea un nuevo issue con detalles del problema
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Créditos
-
-- **Framework**: [Laravel](https://laravel.com/)
-- **UI Framework**: [Bootstrap](https://getbootstrap.com/)
-- **Iconos**: [Bootstrap Icons](https://icons.getbootstrap.com/)
-- **Inspiración**: Comunidad de desarrolladores Laravel
-
----
-
-¡Gracias por usar el Directorio de Restaurantes! 🍽️✨

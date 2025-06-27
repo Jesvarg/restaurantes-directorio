@@ -68,6 +68,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|in:user,owner',
         ]);
 
         try {
@@ -76,6 +77,7 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
             ]);
 
             // Autenticar automáticamente

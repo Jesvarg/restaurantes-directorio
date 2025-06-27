@@ -80,6 +80,11 @@ class RestaurantController extends Controller
      */
     public function create()
     {
+        // Solo admin y owner pueden crear restaurantes
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'owner'])) {
+            abort(403, 'No tienes permisos para crear restaurantes.');
+        }
+        
         $categories = Category::orderBy('name')->get();
         return view('restaurants.create', compact('categories'));
     }
@@ -94,10 +99,18 @@ class RestaurantController extends Controller
      */
     public function store(StoreRestaurantRequest $request)
     {
+        // Solo admin y owner pueden crear restaurantes
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'owner'])) {
+            abort(403, 'No tienes permisos para crear restaurantes.');
+        }
+        
         // Los datos ya están validados por StoreRestaurantRequest
         $validated = $request->validated();
 
         try {
+            // Process opening hours from time picker format
+            $openingHours = $this->processOpeningHours($validated);
+            
             // Crear restaurante
             $restaurant = Restaurant::create([
                 'name' => $validated['name'],
@@ -106,6 +119,9 @@ class RestaurantController extends Controller
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'website' => $validated['website'],
+                'opening_hours' => $openingHours,
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
                 'price_range' => $validated['price_range'],
                 'user_id' => Auth::id(),
                 'status' => 'pending', // Requiere aprobación
@@ -114,9 +130,14 @@ class RestaurantController extends Controller
             // Asociar categorías
             $restaurant->categories()->attach($validated['categories']);
 
-            // Procesar fotos si existen
+            // Procesar fotos subidas si existen
             if ($request->hasFile('photos')) {
                 $this->handlePhotoUploads($restaurant, $request->file('photos'));
+            }
+            
+            // Procesar URLs de fotos si existen
+            if ($request->filled('photo_urls')) {
+                $this->handlePhotoUrls($restaurant, $request->input('photo_urls'));
             }
 
             return redirect()->route('restaurants.show', $restaurant)
@@ -141,19 +162,22 @@ class RestaurantController extends Controller
             'photos' => function ($query) {
                 $query->ordered();
             },
-            'reviews' => function ($query) {
-                $query->with('user')->latest()->limit(10);
-            },
             'user'
         ]);
+        
+        // Paginar reseñas (5 por página)
+        $reviews = $restaurant->reviews()
+            ->with('user')
+            ->latest()
+            ->paginate(5, ['*'], 'reviews_page');
 
         // Verificar si el usuario actual ha marcado como favorito
         $isFavorite = Auth::check() && Auth::user()->favorites()->where('restaurant_id', $restaurant->id)->exists();
         
         // Verificar si el usuario puede editar
-        $canEdit = Auth::check() && (Auth::id() === $restaurant->user_id || Auth::user()->is_admin ?? false);
+        $canEdit = Auth::check() && (Auth::id() === $restaurant->user_id || Auth::user()->role === 'admin');
 
-        return view('restaurants.show', compact('restaurant', 'isFavorite', 'canEdit'));
+        return view('restaurants.show', compact('restaurant', 'reviews', 'isFavorite', 'canEdit'));
     }
 
     /**
@@ -184,6 +208,9 @@ class RestaurantController extends Controller
         $validated = $request->validated();
 
         try {
+            // Process opening hours from time picker format
+            $openingHours = $this->processOpeningHours($validated);
+            
             // Actualizar restaurante
             $restaurant->update([
                 'name' => $validated['name'],
@@ -192,6 +219,9 @@ class RestaurantController extends Controller
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'website' => $validated['website'],
+                'opening_hours' => $openingHours,
+                'latitude' => $validated['latitude'] ?? null,
+                'longitude' => $validated['longitude'] ?? null,
                 'price_range' => $validated['price_range'],
                 'status' => 'pending', // Requiere nueva aprobación tras edición
             ]);
@@ -199,9 +229,14 @@ class RestaurantController extends Controller
             // Actualizar categorías
             $restaurant->categories()->sync($validated['categories']);
 
-            // Procesar nuevas fotos
+            // Procesar nuevas fotos subidas
             if ($request->hasFile('photos')) {
                 $this->handlePhotoUploads($restaurant, $request->file('photos'));
+            }
+            
+            // Procesar nuevas URLs de fotos
+            if ($request->filled('photo_urls')) {
+                $this->handlePhotoUrls($restaurant, $request->input('photo_urls'));
             }
 
             return redirect()->route('restaurants.show', $restaurant)
@@ -246,26 +281,204 @@ class RestaurantController extends Controller
     }
 
     /**
-     * Manejar subida de fotos
+     * Alternar favorito
+     * POST /restaurants/{restaurant}/favorite
+     */
+    public function toggleFavorite(Restaurant $restaurant)
+    {
+        $user = Auth::user();
+        
+        if ($user->favorites()->where('restaurant_id', $restaurant->id)->exists()) {
+            $user->favorites()->detach($restaurant->id);
+            $message = 'Restaurante eliminado de favoritos';
+            $isFavorite = false;
+        } else {
+            $user->favorites()->attach($restaurant->id);
+            $message = 'Restaurante agregado a favoritos';
+            $isFavorite = true;
+        }
+        
+        if (request()->ajax() || request()->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'favorited' => $isFavorite
+            ]);
+        }
+        
+        return back()->with('success', $message);
+    }
+    
+    /**
+     * Guardar review
+     * POST /restaurants/{restaurant}/reviews
+     */
+    public function storeReview(Request $request, Restaurant $restaurant)
+    {
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000'
+        ]);
+        
+        // Verificar que el usuario no haya dejado ya una review
+        $existingReview = $restaurant->reviews()->where('user_id', Auth::id())->first();
+        
+        if ($existingReview) {
+            return back()->withErrors(['error' => 'Ya has dejado una reseña para este restaurante.']);
+        }
+        
+        $restaurant->reviews()->create([
+            'user_id' => Auth::id(),
+            'rating' => $request->rating,
+            'comment' => $request->comment
+        ]);
+        
+        return back()->with('success', 'Reseña agregada exitosamente.');
+    }
+    
+    /**
+     * Mis restaurantes
+     */
+    public function myRestaurants()
+    {
+        $restaurants = Restaurant::where('user_id', Auth::id())
+                                ->with(['categories', 'photos', 'reviews'])
+                                ->latest()
+                                ->paginate(10);
+        
+        return view('dashboard.my-restaurants', compact('restaurants'));
+    }
+    
+    /**
+     * Mis favoritos
+     */
+    public function myFavorites()
+    {
+        $restaurants = Auth::user()->favorites()
+                          ->with(['categories', 'photos', 'reviews'])
+                          ->latest('favorites.created_at')
+                          ->paginate(10);
+        
+        return view('dashboard.my-favorites', compact('restaurants'));
+    }
+    
+    /**
+     * Mis reviews
+     */
+    public function myReviews()
+    {
+        $reviews = Auth::user()->reviews()
+                      ->with('restaurant')
+                      ->latest()
+                      ->paginate(10);
+        
+        return view('dashboard.my-reviews', compact('reviews'));
+    }
+
+    /**
+     * Manejar subida de fotos/**
+     * Process opening hours from time picker format to JSON format
+     */
+    private function processOpeningHours(array $validated): ?array
+    {
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $openingHours = [];
+        
+        foreach ($days as $day) {
+            $isOpen = $validated['is_open'][$day] ?? false;
+            
+            if ($isOpen && isset($validated['open_time'][$day]) && isset($validated['close_time'][$day])) {
+                $openTime = $validated['open_time'][$day];
+                $closeTime = $validated['close_time'][$day];
+                
+                if ($openTime && $closeTime) {
+                    $openingHours[$day] = $openTime . ' - ' . $closeTime;
+                } else {
+                    $openingHours[$day] = 'Cerrado';
+                }
+            } else {
+                $openingHours[$day] = 'Cerrado';
+            }
+        }
+        
+        return empty($openingHours) ? null : $openingHours;
+    }
+
+    /**
      * Método privado para procesar múltiples fotos
      */
     private function handlePhotoUploads(Restaurant $restaurant, array $photos)
     {
         foreach ($photos as $index => $photo) {
             if ($photo && $photo->isValid()) {
-                // Generar nombre único
-                $filename = time() . '_' . $index . '.' . $photo->getClientOriginalExtension();
-                
-                // Guardar archivo
-                $path = $photo->storeAs('restaurants', $filename, 'public');
-                
-                // Crear registro en base de datos
-                $restaurant->photos()->create([
-                    'url' => $path,
-                    'alt_text' => "Foto de {$restaurant->name}",
-                    'is_primary' => $index === 0 && $restaurant->photos()->count() === 0,
-                    'order' => $restaurant->photos()->count() + 1,
-                ]);
+                try {
+                    // Validar que sea una imagen
+                    $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
+                    $mimeType = $photo->getMimeType();
+                    
+                    if (!in_array($mimeType, $allowedMimes)) {
+                        continue; // Saltar archivos que no sean imágenes
+                    }
+                    
+                    // Generar nombre único
+                    $extension = $photo->getClientOriginalExtension();
+                    if (empty($extension)) {
+                        // Fallback basado en mime type
+                        $mimeToExt = [
+                            'image/jpeg' => 'jpg',
+                            'image/png' => 'png',
+                            'image/gif' => 'gif',
+                            'image/webp' => 'webp'
+                        ];
+                        $extension = $mimeToExt[$mimeType] ?? 'jpg';
+                    }
+                    
+                    $filename = time() . '_' . $index . '.' . $extension;
+                    
+                    // Guardar archivo
+                    $path = $photo->storeAs('restaurants', $filename, 'public');
+                    
+                    // Crear registro en base de datos
+                    $restaurant->photos()->create([
+                        'url' => $path,
+                        'alt_text' => "Foto de {$restaurant->name}",
+                        'is_primary' => $index === 0 && $restaurant->photos()->count() === 0,
+                        'order' => $restaurant->photos()->count() + 1,
+                    ]);
+                } catch (\Exception $e) {
+                    // Log error but continue with other photos
+                    \Log::error('Error uploading photo: ' . $e->getMessage());
+                    continue;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Método privado para procesar URLs de fotos
+     */
+    private function handlePhotoUrls(Restaurant $restaurant, array $photoUrls)
+    {
+        foreach ($photoUrls as $index => $url) {
+            if (!empty(trim($url))) {
+                try {
+                    // Validar que la URL sea válida y apunte a una imagen
+                    if (filter_var($url, FILTER_VALIDATE_URL) && 
+                        preg_match('/\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i', $url)) {
+                        
+                        // Crear registro en base de datos
+                        $restaurant->photos()->create([
+                            'url' => $url,
+                            'alt_text' => "Foto de {$restaurant->name}",
+                            'is_primary' => $index === 0 && $restaurant->photos()->count() === 0,
+                            'order' => $restaurant->photos()->count() + 1,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Log error but continue with other URLs
+                    \Log::error('Error processing photo URL: ' . $e->getMessage());
+                    continue;
+                }
             }
         }
     }

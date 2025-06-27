@@ -113,6 +113,29 @@
                             <div id="passwordMatch" class="form-text"></div>
                         </div>
                         
+                        <!-- User Role -->
+                        <div class="mb-3">
+                            <label for="role" class="form-label">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Tipo de Usuario
+                            </label>
+                            <select class="form-select @error('role') is-invalid @enderror" 
+                                    id="role" 
+                                    name="role" 
+                                    required>
+                                <option value="">Selecciona tu tipo de usuario</option>
+                                <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>Usuario - Explorar y reseñar restaurantes</option>
+                                <option value="owner" {{ old('role') === 'owner' ? 'selected' : '' }}>Propietario - Gestionar mis restaurantes</option>
+                            </select>
+                            @error('role')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <strong>Usuario:</strong> Puedes explorar, reseñar y marcar restaurantes como favoritos.<br>
+                                <strong>Propietario:</strong> Puedes agregar y gestionar tus propios restaurantes.
+                            </div>
+                        </div>
+                        
                         <!-- Terms and Conditions -->
                         <div class="mb-3">
                             <div class="form-check">

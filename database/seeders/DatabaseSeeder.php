@@ -12,17 +12,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed categories first
+        // Seed in order: Categories -> Users -> Restaurants -> Reviews
         $this->call([
             CategorySeeder::class,
+            UserSeeder::class,
+            RestaurantSeeder::class,
+            ReviewSeeder::class,
         ]);
-
-        // Create test users
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
     }
 }

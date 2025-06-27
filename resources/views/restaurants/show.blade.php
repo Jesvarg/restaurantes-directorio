@@ -84,7 +84,7 @@
                             <div class="carousel-inner">
                                 @foreach($restaurant->photos as $index => $photo)
                                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                                        <img src="{{ Storage::url($photo->url) }}" 
+                                        <img src="{{ $photo->url }}" 
                                              class="d-block w-100" 
                                              style="height: 400px; object-fit: cover;"
                                              alt="{{ $photo->alt_text }}">
@@ -137,8 +137,8 @@
                     @endauth
                 </div>
                 <div class="card-body">
-                    @if($restaurant->reviews->count() > 0)
-                        @foreach($restaurant->reviews as $review)
+                    @if($reviews->count() > 0)
+                        @foreach($reviews as $review)
                             <div class="border-bottom pb-3 mb-3">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <div>
@@ -156,6 +156,13 @@
                                 @endif
                             </div>
                         @endforeach
+                        
+                        <!-- Paginación de reseñas -->
+                        @if($reviews->hasPages())
+                            <div class="d-flex justify-content-center mt-4">
+                                {{ $reviews->appends(request()->query())->links('pagination::bootstrap-4') }}
+                            </div>
+                        @endif
                     @else
                         <div class="text-center py-4">
                             <i class="bi bi-chat-dots display-4 text-muted mb-3"></i>
@@ -301,14 +308,14 @@
                     <h5 class="modal-title" id="reviewModalLabel">Escribir reseña para {{ $restaurant->name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="{{ route('reviews.store') }}" method="POST">
+                <form action="{{ route('restaurants.reviews.store', $restaurant) }}" method="POST">
                     @csrf
                     <input type="hidden" name="restaurant_id" value="{{ $restaurant->id }}">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="rating" class="form-label">Calificación *</label>
                             <div class="rating-input">
-                                @for($i = 1; $i <= 5; $i++)
+                                @for($i = 5; $i >= 1; $i--)
                                     <input type="radio" name="rating" value="{{ $i }}" id="star{{ $i }}" required>
                                     <label for="star{{ $i }}" class="star-label">
                                         <i class="bi bi-star-fill"></i>

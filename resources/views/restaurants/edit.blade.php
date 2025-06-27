@@ -185,7 +185,7 @@
                                     <i class="bi bi-clock me-2"></i>
                                     Horarios de Atención
                                 </h5>
-                                <p class="text-muted small mb-3">Formato: HH:MM - HH:MM (ej: 09:00 - 22:00) o "Cerrado"</p>
+                                <p class="text-muted small mb-3">Selecciona los horarios de apertura y cierre para cada día</p>
                             </div>
                             
                             @php
@@ -198,21 +198,83 @@
                                     'saturday' => 'Sábado',
                                     'sunday' => 'Domingo'
                                 ];
-                                $openingHours = old('opening_hours', $restaurant->opening_hours ?? []);
+                                $openingHours = $restaurant->opening_hours ?? [];
+                                
+                                // Parse existing opening hours to extract times
+                                $parsedHours = [];
+                                foreach ($days as $day => $dayName) {
+                                    $hours = $openingHours[$day] ?? '';
+                                    if ($hours && $hours !== 'Cerrado' && strpos($hours, ' - ') !== false) {
+                                        $times = explode(' - ', $hours);
+                                        $parsedHours[$day] = [
+                                            'is_open' => true,
+                                            'open_time' => $times[0] ?? '',
+                                            'close_time' => $times[1] ?? ''
+                                        ];
+                                    } else {
+                                        $parsedHours[$day] = [
+                                            'is_open' => false,
+                                            'open_time' => '',
+                                            'close_time' => ''
+                                        ];
+                                    }
+                                }
                             @endphp
                             
                             @foreach($days as $day => $dayName)
-                                <div class="col-md-6 col-lg-4 mb-3">
-                                    <label for="opening_hours_{{ $day }}" class="form-label">{{ $dayName }}</label>
-                                    <input type="text" 
-                                           class="form-control @error('opening_hours.'.$day) is-invalid @enderror" 
-                                           id="opening_hours_{{ $day }}" 
-                                           name="opening_hours[{{ $day }}]" 
-                                           value="{{ $openingHours[$day] ?? '' }}"
-                                           placeholder="09:00 - 22:00">
-                                    @error('opening_hours.'.$day)
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                <div class="col-12 mb-3">
+                                    <div class="card">
+                                        <div class="card-body py-3">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-2">
+                                                    <label class="form-label mb-0 fw-bold">{{ $dayName }}</label>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" 
+                                                               id="is_open_{{ $day }}" 
+                                                               name="is_open[{{ $day }}]" 
+                                                               value="1"
+                                                               {{ old('is_open.'.$day, $parsedHours[$day]['is_open']) ? 'checked' : '' }}
+                                                               onchange="toggleHours('{{ $day }}')">
+                                                        <label class="form-check-label" for="is_open_{{ $day }}">
+                                                            Abierto
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-8" id="hours_{{ $day }}" style="display: {{ old('is_open.'.$day, $parsedHours[$day]['is_open']) ? 'block' : 'none' }};">
+                                                    <div class="row">
+                                                        <div class="col-md-5">
+                                                            <label for="open_time_{{ $day }}" class="form-label small">Hora de apertura</label>
+                                                            <input type="time" 
+                                                                   class="form-control @error('open_time.'.$day) is-invalid @enderror" 
+                                                                   id="open_time_{{ $day }}" 
+                                                                   name="open_time[{{ $day }}]" 
+                                                                   value="{{ old('open_time.'.$day, $parsedHours[$day]['open_time']) }}">
+                                                            @error('open_time.'.$day)
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror
+                                                        </div>
+                                                        <div class="col-md-2 text-center">
+                                                            <label class="form-label small">&nbsp;</label>
+                                                            <div class="pt-2">hasta</div>
+                                                        </div>
+                                                        <div class="col-md-5">
+                                                            <label for="close_time_{{ $day }}" class="form-label small">Hora de cierre</label>
+                                                            <input type="time" 
+                                                                   class="form-control @error('close_time.'.$day) is-invalid @enderror" 
+                                                                   id="close_time_{{ $day }}" 
+                                                                   name="close_time[{{ $day }}]" 
+                                                                   value="{{ old('close_time.'.$day, $parsedHours[$day]['close_time']) }}">
+                                                            @error('close_time.'.$day)
+                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                            @enderror
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -315,29 +377,80 @@
                                 </h5>
                             </div>
                             
-                            <div class="col-12 mb-3">
-                                <label for="photos" class="form-label">Subir Fotos</label>
-                                <input type="file" 
-                                       class="form-control @error('photos') @error('photos.*') is-invalid @enderror @enderror" 
-                                       id="photos" 
-                                       name="photos[]" 
-                                       multiple
-                                       accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                                @error('photos')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                @error('photos.*')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <div class="form-text">
-                                    Máximo 10 fotos. Formatos permitidos: JPEG, PNG, JPG, GIF, WebP. Tamaño máximo: 2MB por imagen.
-                                    Dimensiones recomendadas: entre 300x200 y 2000x2000 píxeles.
-                                </div>
-                            </div>
-                            
-                            <!-- Photo Preview -->
+                            <!-- Photo Upload Tabs -->
                             <div class="col-12">
-                                <div id="photoPreview" class="row g-2" style="display: none;"></div>
+                                <ul class="nav nav-tabs" id="photoTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button" role="tab">
+                                            <i class="bi bi-upload me-2"></i>Subir desde Computadora
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url-pane" type="button" role="tab">
+                                            <i class="bi bi-link-45deg me-2"></i>URLs de Imágenes
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content border border-top-0 p-3" id="photoTabContent">
+                                    <!-- File Upload Tab -->
+                                    <div class="tab-pane fade show active" id="upload-pane" role="tabpanel">
+                                        <label for="photos" class="form-label">Subir Fotos</label>
+                                        <input type="file" 
+                                               class="form-control @error('photos') @error('photos.*') is-invalid @enderror @enderror" 
+                                               id="photos" 
+                                               name="photos[]" 
+                                               multiple
+                                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                        @error('photos')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        @error('photos.*')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <div class="form-text">
+                                            Máximo 8 fotos. Formatos permitidos: JPEG, PNG, JPG, GIF, WebP. Tamaño máximo: 2MB por imagen.
+                                            Dimensiones recomendadas: entre 300x200 y 2000x2000 píxeles.
+                                        </div>
+                                        
+                                        <!-- Photo Preview -->
+                                        <div id="photoPreview" class="row g-2 mt-2" style="display: none;"></div>
+                                    </div>
+                                    
+                                    <!-- URL Tab -->
+                                    <div class="tab-pane fade" id="url-pane" role="tabpanel">
+                                        <label class="form-label">URLs de Imágenes</label>
+                                        <div id="photoUrlsContainer">
+                                            <div class="input-group mb-2">
+                                                <input type="url" 
+                                                       class="form-control @error('photo_urls.0') is-invalid @enderror" 
+                                                       name="photo_urls[]" 
+                                                       placeholder="https://ejemplo.com/imagen.jpg">
+                                                <button type="button" class="btn btn-outline-danger" onclick="removePhotoUrl(this)" style="display: none;">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                                @error('photo_urls.0')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                        
+                                        <button type="button" id="addPhotoUrlBtn" class="btn btn-outline-primary btn-sm mb-2" onclick="addPhotoUrl()">
+                                            <i class="bi bi-plus-circle me-1"></i>Agregar otra URL
+                                        </button>
+                                        
+                                        @error('photo_urls')
+                                            <div class="text-danger small">{{ $message }}</div>
+                                        @enderror
+                                        @error('photo_urls.*')
+                                            <div class="text-danger small">{{ $message }}</div>
+                                        @enderror
+                                        
+                                        <div class="form-text">
+                                            Máximo 8 URLs. Las imágenes deben ser accesibles públicamente y tener formato: JPEG, PNG, JPG, GIF o WebP.
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -405,6 +518,21 @@
 
 @push('scripts')
 <script>
+// Toggle hours visibility
+function toggleHours(day) {
+    const checkbox = document.getElementById('is_open_' + day);
+    const hoursDiv = document.getElementById('hours_' + day);
+    
+    if (checkbox.checked) {
+        hoursDiv.style.display = 'block';
+    } else {
+        hoursDiv.style.display = 'none';
+        // Clear the time inputs when closing
+        document.getElementById('open_time_' + day).value = '';
+        document.getElementById('close_time_' + day).value = '';
+    }
+}
+
 // Photo preview functionality
 document.getElementById('photos').addEventListener('change', function(e) {
     const files = e.target.files;
@@ -464,15 +592,20 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
 // Auto-format phone number
 document.getElementById('phone').addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 0) {
-        if (value.length <= 3) {
-            value = value;
-        } else if (value.length <= 6) {
-            value = value.slice(0, 3) + ' ' + value.slice(3);
-        } else {
-            value = value.slice(0, 3) + ' ' + value.slice(3, 6) + ' ' + value.slice(6, 10);
-        }
+    
+    // Limitar a 10 dígitos máximo
+    if (value.length > 10) {
+        value = value.substring(0, 10);
     }
+    
+    if (value.length >= 10) {
+        value = value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+    } else if (value.length >= 6) {
+        value = value.replace(/(\d{3})(\d{3})/, '($1) $2-');
+    } else if (value.length >= 3) {
+        value = value.replace(/(\d{3})/, '($1) ');
+    }
+    
     e.target.value = value;
 });
 
@@ -501,6 +634,81 @@ document.addEventListener('change', function(e) {
             }
         }
     }
+});
+
+// Photo URL management functions
+function addPhotoUrl() {
+    const container = document.getElementById('photoUrlsContainer');
+    const currentInputs = container.querySelectorAll('input[name="photo_urls[]"]');
+    
+    if (currentInputs.length >= 8) {
+        alert('Máximo 8 URLs de fotos permitidas.');
+        return;
+    }
+    
+    const newInputGroup = document.createElement('div');
+    newInputGroup.className = 'input-group mb-2';
+    newInputGroup.innerHTML = `
+        <input type="url" 
+               class="form-control" 
+               name="photo_urls[]" 
+               placeholder="https://ejemplo.com/imagen.jpg">
+        <button type="button" class="btn btn-outline-danger" onclick="removePhotoUrl(this)">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+    
+    container.appendChild(newInputGroup);
+    updatePhotoUrlButtons();
+}
+
+function removePhotoUrl(button) {
+    const inputGroup = button.closest('.input-group');
+    inputGroup.remove();
+    updatePhotoUrlButtons();
+}
+
+function updatePhotoUrlButtons() {
+    const container = document.getElementById('photoUrlsContainer');
+    const inputGroups = container.querySelectorAll('.input-group');
+    const addButton = document.getElementById('addPhotoUrlBtn');
+    
+    // Show/hide remove buttons
+    inputGroups.forEach((group, index) => {
+        const removeButton = group.querySelector('.btn-outline-danger');
+        if (inputGroups.length > 1) {
+            removeButton.style.display = 'block';
+        } else {
+            removeButton.style.display = 'none';
+        }
+    });
+    
+    // Show/hide add button
+    if (inputGroups.length >= 8) {
+        addButton.style.display = 'none';
+    } else {
+        addButton.style.display = 'inline-block';
+    }
+}
+
+// Initialize photo URL buttons on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updatePhotoUrlButtons();
+    
+    // Add validation for total photos (files + URLs) on form submit
+    document.getElementById('restaurantForm').addEventListener('submit', function(e) {
+        const fileInputs = document.getElementById('photos').files;
+        const urlInputs = document.querySelectorAll('input[name="photo_urls[]"]');
+        const filledUrls = Array.from(urlInputs).filter(input => input.value.trim() !== '');
+        
+        const totalPhotos = fileInputs.length + filledUrls.length;
+        
+        if (totalPhotos > 8) {
+            e.preventDefault();
+            alert('No puedes agregar más de 8 fotos en total (archivos + URLs).');
+            return false;
+        }
+    });
 });
 </script>
 @endpush

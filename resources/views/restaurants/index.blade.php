@@ -115,9 +115,11 @@
             </p>
         </div>
         @auth
-            <a href="{{ route('restaurants.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Agregar Restaurante
-            </a>
+            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'owner')
+                <a href="{{ route('restaurants.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Restaurante
+                </a>
+            @endif
         @endauth
     </div>
 
@@ -130,7 +132,7 @@
                         <!-- Restaurant Image -->
                         <div class="position-relative">
                             @if($restaurant->primaryPhoto)
-                                <img src="{{ Storage::url($restaurant->primaryPhoto->url) }}" 
+                                <img src="{{ $restaurant->primaryPhoto->url }}" 
                                      class="card-img-top restaurant-image" 
                                      alt="{{ $restaurant->primaryPhoto->alt_text }}">
                             @else

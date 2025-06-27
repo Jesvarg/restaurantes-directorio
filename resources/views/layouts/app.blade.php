@@ -173,18 +173,7 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('restaurants.index') ? 'active' : '' }}" href="{{ route('restaurants.index') }}">
-                            <i class="bi bi-house-door me-1"></i>Inicio
-                        </a>
-                    </li>
-                    @auth
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('restaurants.create') ? 'active' : '' }}" href="{{ route('restaurants.create') }}">
-                                <i class="bi bi-plus-circle me-1"></i>Agregar Restaurante
-                            </a>
-                        </li>
-                    @endauth
+                    <!-- Navegación principal removida según solicitud del usuario -->
                 </ul>
 
                 <ul class="navbar-nav">
@@ -206,14 +195,21 @@
                                 {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="#">
-                                    <i class="bi bi-person me-2"></i>Mi Perfil
-                                </a></li>
-                                <li><a class="dropdown-item" href="#">
+                                <li><a class="dropdown-item" href="{{ route('dashboard.favorites') }}">
                                     <i class="bi bi-heart me-2"></i>Mis Favoritos
                                 </a></li>
-                                <li><a class="dropdown-item" href="#">
+                                @if(Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
+                                <li><a class="dropdown-item" href="{{ route('dashboard.restaurants') }}">
                                     <i class="bi bi-shop me-2"></i>Mis Restaurantes
+                                </a></li>
+                                @endif
+                                @if(Auth::user()->role === 'admin')
+                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                    <i class="bi bi-shield-check me-2"></i>Panel de Admin
+                                </a></li>
+                                @endif
+                                <li><a class="dropdown-item" href="{{ route('dashboard.reviews') }}">
+                                    <i class="bi bi-chat-left-text me-2"></i>Mis Reseñas
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>

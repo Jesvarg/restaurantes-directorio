@@ -58,17 +58,35 @@ class StoreRestaurantRequest extends FormRequest
                 'max:255',
                 'regex:/^https?:\/\/.+/', // Debe empezar con http:// o https://
             ],
-            'opening_hours' => [
-                'nullable',
-                'array',
-            ],
-            'opening_hours.monday' => 'nullable|string|max:50',
-            'opening_hours.tuesday' => 'nullable|string|max:50',
-            'opening_hours.wednesday' => 'nullable|string|max:50',
-            'opening_hours.thursday' => 'nullable|string|max:50',
-            'opening_hours.friday' => 'nullable|string|max:50',
-            'opening_hours.saturday' => 'nullable|string|max:50',
-            'opening_hours.sunday' => 'nullable|string|max:50',
+            // Opening status for each day
+            'is_open' => 'nullable|array',
+            'is_open.monday' => 'nullable|boolean',
+            'is_open.tuesday' => 'nullable|boolean',
+            'is_open.wednesday' => 'nullable|boolean',
+            'is_open.thursday' => 'nullable|boolean',
+            'is_open.friday' => 'nullable|boolean',
+            'is_open.saturday' => 'nullable|boolean',
+            'is_open.sunday' => 'nullable|boolean',
+            
+            // Opening times
+            'open_time' => 'nullable|array',
+            'open_time.monday' => 'nullable|date_format:H:i',
+            'open_time.tuesday' => 'nullable|date_format:H:i',
+            'open_time.wednesday' => 'nullable|date_format:H:i',
+            'open_time.thursday' => 'nullable|date_format:H:i',
+            'open_time.friday' => 'nullable|date_format:H:i',
+            'open_time.saturday' => 'nullable|date_format:H:i',
+            'open_time.sunday' => 'nullable|date_format:H:i',
+            
+            // Closing times
+            'close_time' => 'nullable|array',
+            'close_time.monday' => 'nullable|date_format:H:i',
+            'close_time.tuesday' => 'nullable|date_format:H:i',
+            'close_time.wednesday' => 'nullable|date_format:H:i',
+            'close_time.thursday' => 'nullable|date_format:H:i',
+            'close_time.friday' => 'nullable|date_format:H:i',
+            'close_time.saturday' => 'nullable|date_format:H:i',
+            'close_time.sunday' => 'nullable|date_format:H:i',
             'price_range' => [
                 'required',
                 'integer',
@@ -97,13 +115,23 @@ class StoreRestaurantRequest extends FormRequest
             'photos' => [
                 'nullable',
                 'array',
-                'max:10', // Máximo 10 fotos
+                'max:8', // Máximo 8 fotos
             ],
             'photos.*' => [
                 'image',
                 'mimes:jpeg,png,jpg,gif,webp',
                 'max:2048', // Máximo 2MB por imagen
                 'dimensions:min_width=300,min_height=200,max_width=2000,max_height=2000',
+            ],
+            'photo_urls' => [
+                'nullable',
+                'array',
+                'max:8', // Máximo 8 URLs
+            ],
+            'photo_urls.*' => [
+                'nullable',
+                'url',
+                'regex:/\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i', // Debe terminar en extensión de imagen
             ],
         ];
     }
@@ -145,11 +173,15 @@ class StoreRestaurantRequest extends FormRequest
             'categories.max' => 'No puede seleccionar más de 5 categorías.',
             'categories.*.exists' => 'Una de las categorías seleccionadas no es válida.',
             
-            'photos.max' => 'No puede subir más de 10 fotos.',
+            'photos.max' => 'No puede subir más de 8 fotos.',
             'photos.*.image' => 'Todos los archivos deben ser imágenes.',
             'photos.*.mimes' => 'Las imágenes deben ser de tipo: jpeg, png, jpg, gif o webp.',
             'photos.*.max' => 'Cada imagen no puede exceder 2MB.',
             'photos.*.dimensions' => 'Las imágenes deben tener entre 300x200 y 2000x2000 píxeles.',
+            
+            'photo_urls.max' => 'No puede agregar más de 8 URLs de fotos.',
+            'photo_urls.*.url' => 'Cada URL debe ser válida.',
+            'photo_urls.*.regex' => 'Las URLs deben apuntar a archivos de imagen (jpeg, jpg, png, gif, webp).
         ];
     }
 
@@ -170,6 +202,7 @@ class StoreRestaurantRequest extends FormRequest
             'longitude' => 'longitud',
             'categories' => 'categorías',
             'photos' => 'fotos',
+            'photo_urls' => 'URLs de fotos',
         ];
     }
 

@@ -76,3 +76,27 @@ Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::get('/my-reviews', [RestaurantController::class, 'myReviews'])
         ->name('dashboard.reviews');
 });
+
+// Admin Routes (solo para administradores)
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])
+        ->name('dashboard');
+    
+    Route::get('/restaurants/pending', [App\Http\Controllers\AdminController::class, 'pendingRestaurants'])
+        ->name('restaurants.pending');
+    
+    Route::get('/restaurants/all', [App\Http\Controllers\AdminController::class, 'allRestaurants'])
+        ->name('restaurants.all');
+    
+    Route::patch('/restaurants/{restaurant}/approve', [App\Http\Controllers\AdminController::class, 'approveRestaurant'])
+        ->name('restaurants.approve');
+    
+    Route::patch('/restaurants/{restaurant}/reject', [App\Http\Controllers\AdminController::class, 'rejectRestaurant'])
+        ->name('restaurants.reject');
+    
+    Route::patch('/restaurants/{restaurant}/suspend', [App\Http\Controllers\AdminController::class, 'suspendRestaurant'])
+        ->name('restaurants.suspend');
+    
+    Route::patch('/restaurants/{restaurant}/reactivate', [App\Http\Controllers\AdminController::class, 'reactivateRestaurant'])
+        ->name('restaurants.reactivate');
+});

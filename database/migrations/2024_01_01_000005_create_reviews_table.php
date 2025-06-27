@@ -28,9 +28,6 @@ return new class extends Migration
             $table->unique(['user_id', 'restaurant_id']);
             // Índice para búsquedas por rating
             $table->index(['restaurant_id', 'rating']);
-            
-            // Validación: rating debe estar entre 1 y 5
-            $table->check('rating >= 1 AND rating <= 5');
         });
     }
 

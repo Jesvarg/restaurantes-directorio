@@ -1,7 +1,13 @@
 <?php
 
+use App\Http\Controllers\ChatbotController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Agregar esta ruta
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chatbot/auth', [ChatbotController::class, 'getAuthToken']);
+});
 
 /*
 |--------------------------------------------------------------------------

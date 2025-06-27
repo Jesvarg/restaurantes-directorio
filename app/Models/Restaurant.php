@@ -29,6 +29,8 @@ class Restaurant extends Model
         'opening_hours',
         'price_range',
         'status',
+        'rejection_reason',
+        'suspension_reason',
         'latitude',
         'longitude',
         'user_id',

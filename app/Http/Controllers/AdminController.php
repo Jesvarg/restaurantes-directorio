@@ -63,9 +63,17 @@ class AdminController extends Controller
      */
     public function approveRestaurant(Restaurant $restaurant)
     {
-        $restaurant->update(['status' => 'approved']);
-        
-        return back()->with('success', "Restaurante '{$restaurant->name}' aprobado exitosamente.");
+        try {
+            $restaurant->update([
+                'status' => 'approved',
+                'rejection_reason' => null,
+                'suspension_reason' => null
+            ]);
+            
+            return back()->with('success', "✅ Restaurante '{$restaurant->name}' aprobado exitosamente.");
+        } catch (\Exception $e) {
+            return back()->with('error', "❌ Error al aprobar el restaurante: " . $e->getMessage());
+        }
     }
 
     /**
@@ -74,15 +82,22 @@ class AdminController extends Controller
     public function rejectRestaurant(Request $request, Restaurant $restaurant)
     {
         $request->validate([
-            'reason' => 'nullable|string|max:500'
+            'reason' => 'required|string|max:500'
+        ], [
+            'reason.required' => 'Debe proporcionar una razón para el rechazo.'
         ]);
 
-        $restaurant->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->input('reason')
-        ]);
-        
-        return back()->with('success', "Restaurante '{$restaurant->name}' rechazado.");
+        try {
+            $restaurant->update([
+                'status' => 'rejected',
+                'rejection_reason' => $request->input('reason'),
+                'suspension_reason' => null
+            ]);
+            
+            return back()->with('success', "🚫 Restaurante '{$restaurant->name}' rechazado.");
+        } catch (\Exception $e) {
+            return back()->with('error', "❌ Error al rechazar el restaurante: " . $e->getMessage());
+        }
     }
 
     /**
@@ -91,15 +106,22 @@ class AdminController extends Controller
     public function suspendRestaurant(Request $request, Restaurant $restaurant)
     {
         $request->validate([
-            'reason' => 'nullable|string|max:500'
+            'reason' => 'required|string|max:500'
+        ], [
+            'reason.required' => 'Debe proporcionar una razón para la suspensión.'
         ]);
 
-        $restaurant->update([
-            'status' => 'suspended',
-            'suspension_reason' => $request->input('reason')
-        ]);
-        
-        return back()->with('success', "Restaurante '{$restaurant->name}' suspendido.");
+        try {
+            $restaurant->update([
+                'status' => 'suspended',
+                'suspension_reason' => $request->input('reason'),
+                'rejection_reason' => null
+            ]);
+            
+            return back()->with('success', "⏸️ Restaurante '{$restaurant->name}' suspendido.");
+        } catch (\Exception $e) {
+            return back()->with('error', "❌ Error al suspender el restaurante: " . $e->getMessage());
+        }
     }
 
     /**
@@ -107,27 +129,31 @@ class AdminController extends Controller
      */
     public function reactivateRestaurant(Restaurant $restaurant)
     {
-        $restaurant->update([
-            'status' => 'approved',
-            'rejection_reason' => null,
-            'suspension_reason' => null
-        ]);
-        
-        return back()->with('success', "Restaurante '{$restaurant->name}' reactivado.");
+        try {
+            $restaurant->update([
+                'status' => 'approved',
+                'rejection_reason' => null,
+                'suspension_reason' => null
+            ]);
+            
+            return back()->with('success', "✅ Restaurante '{$restaurant->name}' reactivado exitosamente.");
+        } catch (\Exception $e) {
+            return back()->with('error', "❌ Error al reactivar el restaurante: " . $e->getMessage());
+        }
     }
 
     /**
-     * Lista de todos los restaurantes para administración
+     * Obtener estadísticas para all-restaurants
      */
     public function allRestaurants(Request $request)
     {
         $query = Restaurant::with(['user', 'categories', 'photos']);
-
+    
         // Filtro por estado
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
+    
         // Filtro por búsqueda
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
@@ -139,9 +165,15 @@ class AdminController extends Controller
                   });
             });
         }
-
+    
         $restaurants = $query->latest()->paginate(15);
-
-        return view('admin.all-restaurants', compact('restaurants'));
+    
+        // Obtener estadísticas por estado
+        $statusCounts = Restaurant::selectRaw('status, COUNT(*) as count')
+                                 ->groupBy('status')
+                                 ->pluck('count', 'status')
+                                 ->toArray();
+    
+        return view('admin.all-restaurants', compact('restaurants', 'statusCounts'));
     }
 }

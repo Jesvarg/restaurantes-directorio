@@ -7,6 +7,12 @@
 
     <title>{{ config('app.name', 'Directorio Restaurantes') }} - @yield('title', 'Inicio')</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
@@ -25,6 +31,11 @@
             --accent-color: #f39c12;
             --light-bg: #f8f9fa;
             --dark-text: #2c3e50;
+            --admin-primary: #3498db;
+            --admin-success: #27ae60;
+            --admin-warning: #f39c12;
+            --admin-danger: #e74c3c;
+            --admin-dark: #2c3e50;
         }
 
         body {
@@ -319,3 +330,50 @@
     @stack('scripts')
 </body>
 </html>
+
+<style>
+    :root {
+        --primary-color: #e74c3c;
+        --secondary-color: #34495e;
+        --accent-color: #f39c12;
+        --light-bg: #f8f9fa;
+        --dark-text: #2c3e50;
+        --admin-primary: #3498db;
+        --admin-success: #27ae60;
+        --admin-warning: #f39c12;
+        --admin-danger: #e74c3c;
+        --admin-dark: #2c3e50;
+    }
+
+    /* Admin specific styles */
+    .admin-header {
+        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .admin-card {
+        border-left: 4px solid var(--admin-primary);
+        transition: all 0.3s ease;
+    }
+
+    .admin-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+    }
+
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+</style>

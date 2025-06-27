@@ -238,7 +238,44 @@
 
 @push('scripts')
 <script>
-// Auto-hide toasts after 5 seconds
+// Mejorar confirmaciones con SweetAlert2 (opcional)
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación para aprobar
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const restaurantName = this.dataset.restaurant;
+            
+            if (confirm(`¿Está seguro de que desea APROBAR el restaurante "${restaurantName}"?\n\nEsta acción permitirá que el restaurante sea visible públicamente.`)) {
+                form.submit();
+            }
+        });
+    });
+    
+    // Confirmación para rechazar
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            const restaurantName = this.dataset.restaurant;
+            
+            const reason = prompt(`¿Por qué desea RECHAZAR el restaurante "${restaurantName}"?\n\nProporcione una razón:`);
+            if (reason && reason.trim()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'reason';
+                input.value = reason.trim();
+                form.appendChild(input);
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+@endpush
+
+<!-- Auto-hide toasts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     const toasts = document.querySelectorAll('.toast');
     toasts.forEach(function(toast) {

@@ -1,6 +1,6 @@
 # Directorio de Restaurantes
 
-Una aplicación web moderna para descubrir, compartir y reseñar restaurantes en tu área. Construida con Laravel 10 y Bootstrap 5.
+Una aplicación web moderna para descubrir, compartir y reseñar restaurantes en tu área. Construida con Laravel.
 
 ## Características
 

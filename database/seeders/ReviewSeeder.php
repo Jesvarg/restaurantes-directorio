@@ -40,15 +40,20 @@ class ReviewSeeder extends Seeder
             $selectedUsers = $users->random(min($reviewCount, $users->count()));
             
             foreach ($selectedUsers as $user) {
-                Review::create([
-                    'rating' => rand(3, 5), // Ratings between 3-5 stars
-                    'comment' => $comments[array_rand($comments)],
-                    'user_id' => $user->id,
-                    'restaurant_id' => $restaurant->id,
-                ]);
+                // Use firstOrCreate to prevent duplicate reviews from same user for same restaurant
+                Review::firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'restaurant_id' => $restaurant->id,
+                    ],
+                    [
+                        'rating' => rand(3, 5), // Ratings between 3-5 stars
+                        'comment' => $comments[array_rand($comments)],
+                    ]
+                );
             }
         }
 
-        echo "Reviews seeded successfully!\n";
+        $this->command->info('Reviews seeded successfully!');
     }
 }

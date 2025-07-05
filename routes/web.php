@@ -61,24 +61,29 @@ Route::prefix('api')->middleware('auth')->group(function () {
 Route::get('/search', [RestaurantController::class, 'search'])->name('restaurants.search');
 Route::get('/category/{category}', [RestaurantController::class, 'byCategory'])->name('restaurants.category');
 
-// User Dashboard Routes (for future implementation)
+// User Dashboard Routes
 Route::middleware('auth')->prefix('dashboard')->group(function () {
     Route::get('/', function () {
         return redirect()->route('restaurants.index');
     })->name('dashboard');
     
+    // Solo propietarios y admins pueden acceder a mis restaurantes
     Route::get('/my-restaurants', [RestaurantController::class, 'myRestaurants'])
-        ->name('dashboard.restaurants');
+        ->name('dashboard.restaurants')
+        ->middleware('role:owner,admin');
     
     Route::get('/my-favorites', [RestaurantController::class, 'myFavorites'])
         ->name('dashboard.favorites');
     
     Route::get('/my-reviews', [RestaurantController::class, 'myReviews'])
         ->name('dashboard.reviews');
+    
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'show'])
+        ->name('profile.show');
 });
 
 // Admin Routes (solo para administradores)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])
         ->name('dashboard');
     
@@ -99,4 +104,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     
     Route::patch('/restaurants/{restaurant}/reactivate', [App\Http\Controllers\AdminController::class, 'reactivateRestaurant'])
         ->name('restaurants.reactivate');
+    
+    // User management routes
+    Route::get('/users', [App\Http\Controllers\AdminController::class, 'users'])
+        ->name('users');
+    
+    Route::patch('/users/{user}/suspend', [App\Http\Controllers\AdminController::class, 'suspendUser'])
+        ->name('users.suspend');
+    
+    Route::patch('/users/{user}/reactivate', [App\Http\Controllers\AdminController::class, 'reactivateUser'])
+        ->name('users.reactivate');
+    
+    Route::delete('/users/{user}', [App\Http\Controllers\AdminController::class, 'deleteUser'])
+        ->name('users.delete');
 });

@@ -158,31 +158,80 @@ document.getElementById('togglePassword').addEventListener('click', function() {
     }
 });
 
+// Form validation with visual feedback
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentNode.querySelector('.client-error-message');
+    
+    // Remove existing error message
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Add error styling
+    field.classList.add('is-invalid');
+    
+    // Create and add error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback client-error-message';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+    
+    // Focus the field
+    field.focus();
+}
+
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentNode.querySelector('.client-error-message');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.classList.remove('is-invalid');
+}
+
+// Clear errors on input
+document.getElementById('email').addEventListener('input', function() {
+    clearFieldError('email');
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    clearFieldError('password');
+});
+
 // Form validation
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     
-    if (!email) {
-        e.preventDefault();
-        alert('Por favor ingresa tu correo electrónico.');
-        document.getElementById('email').focus();
-        return false;
-    }
+    let isValid = true;
     
-    if (!password) {
-        e.preventDefault();
-        alert('Por favor ingresa tu contraseña.');
-        document.getElementById('password').focus();
-        return false;
-    }
+    // Clear all previous errors
+    clearFieldError('email');
+    clearFieldError('password');
     
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!email) {
+        showFieldError('email', 'Por favor ingresa tu correo electrónico.');
+        isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('email', 'Por favor ingresa un correo electrónico válido.');
+        isValid = false;
+    }
+    
+    // Password validation
+    if (!password) {
+        showFieldError('password', 'Por favor ingresa tu contraseña.');
+        isValid = false;
+    } else if (password.length < 8) {
+        showFieldError('password', 'La contraseña debe tener al menos 8 caracteres.');
+        isValid = false;
+    }
+    
+    if (!isValid) {
         e.preventDefault();
-        alert('Por favor ingresa un correo electrónico válido.');
-        document.getElementById('email').focus();
         return false;
     }
 });

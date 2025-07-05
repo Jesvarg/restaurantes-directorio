@@ -181,7 +181,7 @@ class StoreRestaurantRequest extends FormRequest
             
             'photo_urls.max' => 'No puede agregar más de 8 URLs de fotos.',
             'photo_urls.*.url' => 'Cada URL debe ser válida.',
-            'photo_urls.*.regex' => 'Las URLs deben apuntar a archivos de imagen (jpeg, jpg, png, gif, webp).
+            'photo_urls.*.regex' => 'Las URLs deben apuntar a archivos de imagen (jpeg, jpg, png, gif, webp).',
         ];
     }
 

@@ -54,9 +54,9 @@
                     <span class="badge bg-warning">{{ ucfirst($restaurant->status) }}</span>
                 </div>
                 
-                @if($restaurant->primaryPhoto)
+                @if($restaurant->photos->count() > 0)
                 <div class="position-relative">
-                    <img src="{{ $restaurant->primaryPhoto->url }}" 
+                    <img src="{{ $restaurant->primary_photo_url }}" 
                          class="card-img-top" 
                          style="height: 200px; object-fit: cover;" 
                          alt="{{ $restaurant->name }}">
@@ -144,24 +144,24 @@
                         </a>
                         
                         <!-- Approve -->
-                        <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="flex-fill">
+                        <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="flex-fill approve-form">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" 
-                                    class="btn btn-success w-100" 
-                                    onclick="return confirm('¿Aprobar el restaurante \"{{ $restaurant->name }}\"?')">
+                            <button type="button" 
+                                    class="btn btn-success w-100 approve-btn" 
+                                    data-restaurant="{{ $restaurant->name }}">
                                 <i class="bi bi-check-lg me-1"></i>
                                 Aprobar
                             </button>
                         </form>
                         
                         <!-- Reject -->
-                        <form method="POST" action="{{ route('admin.restaurants.reject', $restaurant) }}" class="flex-fill">
+                        <form method="POST" action="{{ route('admin.restaurants.reject', $restaurant) }}" class="flex-fill reject-form">
                             @csrf
                             @method('PATCH')
-                            <button type="submit" 
-                                    class="btn btn-danger w-100" 
-                                    onclick="return confirm('¿Rechazar el restaurante \"{{ $restaurant->name }}\"? Esta acción no se puede deshacer.')">
+                            <button type="button" 
+                                    class="btn btn-danger w-100 reject-btn" 
+                                    data-restaurant="{{ $restaurant->name }}">
                                 <i class="bi bi-x-lg me-1"></i>
                                 Rechazar
                             </button>
@@ -204,85 +204,58 @@
     @endif
 </div>
 
-<!-- Success/Error Messages -->
-@if(session('success'))
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
-    <div class="toast show" role="alert">
-        <div class="toast-header bg-success text-white">
-            <i class="bi bi-check-circle me-2"></i>
-            <strong class="me-auto">Éxito</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body">
-            {{ session('success') }}
-        </div>
-    </div>
-</div>
-@endif
 
-@if(session('error'))
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
-    <div class="toast show" role="alert">
-        <div class="toast-header bg-danger text-white">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong class="me-auto">Error</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body">
-            {{ session('error') }}
-        </div>
-    </div>
-</div>
-@endif
 @endsection
 
 @push('scripts')
 <script>
-// Mejorar confirmaciones con SweetAlert2 (opcional)
 document.addEventListener('DOMContentLoaded', function() {
-    // Confirmación para aprobar
+    // Confirmación para aprobar con SweetAlert2
     document.querySelectorAll('.approve-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const form = this.closest('form');
             const restaurantName = this.dataset.restaurant;
             
-            if (confirm(`¿Está seguro de que desea APROBAR el restaurante "${restaurantName}"?\n\nEsta acción permitirá que el restaurante sea visible públicamente.`)) {
-                form.submit();
-            }
+            Swal.fire({
+                title: '¿Aprobar restaurante?',
+                text: `¿Está seguro de que desea aprobar "${restaurantName}"? El restaurante será visible públicamente.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, aprobar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
     });
     
-    // Confirmación para rechazar
+    // Confirmación para rechazar con SweetAlert2
     document.querySelectorAll('.reject-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const form = this.closest('form');
             const restaurantName = this.dataset.restaurant;
             
-            const reason = prompt(`¿Por qué desea RECHAZAR el restaurante "${restaurantName}"?\n\nProporcione una razón:`);
-            if (reason && reason.trim()) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'reason';
-                input.value = reason.trim();
-                form.appendChild(input);
-                form.submit();
-            }
+            Swal.fire({
+                title: '¿Rechazar restaurante?',
+                text: `¿Está seguro de que desea rechazar "${restaurantName}"? Esta acción no se puede deshacer.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, rechazar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
-    });
-});
-</script>
-@endpush
-
-<!-- Auto-hide toasts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const toasts = document.querySelectorAll('.toast');
-    toasts.forEach(function(toast) {
-        setTimeout(function() {
-            const bsToast = new bootstrap.Toast(toast);
-            bsToast.hide();
-        }, 5000);
     });
 });
 </script>

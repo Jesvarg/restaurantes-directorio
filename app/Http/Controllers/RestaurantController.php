@@ -229,6 +229,18 @@ class RestaurantController extends Controller
             // Actualizar categorías
             $restaurant->categories()->sync($validated['categories']);
 
+            // Eliminar fotos marcadas para eliminación
+            if ($request->filled('delete_photos')) {
+                $photosToDelete = $restaurant->photos()->whereIn('id', $request->input('delete_photos'))->get();
+                foreach ($photosToDelete as $photo) {
+                    // Eliminar archivo del almacenamiento si es local
+                    if (str_starts_with($photo->url, 'storage/')) {
+                        Storage::disk('public')->delete(str_replace('storage/', '', $photo->url));
+                    }
+                    $photo->delete();
+                }
+            }
+
             // Procesar nuevas fotos subidas
             if ($request->hasFile('photos')) {
                 $this->handlePhotoUploads($restaurant, $request->file('photos'));

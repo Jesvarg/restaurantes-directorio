@@ -176,4 +176,110 @@ class AdminController extends Controller
     
         return view('admin.all-restaurants', compact('restaurants', 'statusCounts'));
     }
+
+    /**
+     * Lista de todos los usuarios
+     */
+    public function users(Request $request)
+    {
+        $query = User::query();
+
+        // Filtro por rol
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            if ($request->status === 'active') {
+                $query->whereNull('suspended_at');
+            } elseif ($request->status === 'suspended') {
+                $query->whereNotNull('suspended_at');
+            }
+        }
+
+        // Filtro por búsqueda
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $users = $query->withCount('restaurants')->latest()->paginate(15);
+
+        // Obtener estadísticas
+        $totalUsers = User::count();
+        $activeUsers = User::whereNull('suspended_at')->count();
+        $suspendedUsers = User::whereNotNull('suspended_at')->count();
+        $adminUsers = User::where('role', 'admin')->count();
+
+        return view('admin.users', compact('users', 'totalUsers', 'activeUsers', 'suspendedUsers', 'adminUsers'));
+    }
+
+    /**
+     * Suspender usuario
+     */
+    public function suspendUser(Request $request, User $user)
+    {
+        $request->validate([
+            'suspension_reason' => 'required|string|max:1000'
+        ], [
+            'suspension_reason.required' => 'Debe proporcionar una razón para la suspensión.'
+        ]);
+
+        // No permitir suspender administradores
+        if ($user->role === 'admin') {
+            return back()->with('error', 'No se puede suspender a un administrador.');
+        }
+
+        // No permitir auto-suspensión
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'No puedes suspenderte a ti mismo.');
+        }
+
+        $user->update([
+            'suspended_at' => now(),
+            'suspension_reason' => $request->suspension_reason
+        ]);
+
+        return back()->with('success', 'Usuario suspendido correctamente.');
+    }
+
+    /**
+     * Reactivar usuario
+     */
+    public function reactivateUser(User $user)
+    {
+        $user->update([
+            'suspended_at' => null,
+            'suspension_reason' => null
+        ]);
+
+        return back()->with('success', 'Usuario reactivado correctamente.');
+    }
+
+    /**
+     * Eliminar usuario
+     */
+    public function deleteUser(User $user)
+    {
+        // No permitir eliminar administradores
+        if ($user->role === 'admin') {
+            return back()->with('error', 'No se puede eliminar a un administrador.');
+        }
+
+        // No permitir auto-eliminación
+        if ($user->id === Auth::id()) {
+            return back()->with('error', 'No puedes eliminarte a ti mismo.');
+        }
+
+        // Eliminar restaurantes asociados
+        $user->restaurants()->delete();
+        
+        // Eliminar usuario
+        $user->delete();
+
+        return back()->with('success', 'Usuario eliminado correctamente.');
+    }
 }

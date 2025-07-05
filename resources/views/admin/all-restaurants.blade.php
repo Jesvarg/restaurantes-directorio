@@ -154,17 +154,17 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($restaurant->primaryPhoto)
-                                                <img src="{{ $restaurant->primaryPhoto->url }}" 
-                                                     class="rounded me-3" 
-                                                     style="width: 50px; height: 50px; object-fit: cover;" 
-                                                     alt="{{ $restaurant->name }}">
-                                            @else
-                                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
-                                                     style="width: 50px; height: 50px;">
-                                                    <i class="bi bi-image text-muted"></i>
-                                                </div>
-                                            @endif
+                            @if($restaurant->photos->count() > 0)
+                                <img src="{{ $restaurant->primary_photo_url }}" 
+                                     class="rounded me-3" 
+                                     style="width: 50px; height: 50px; object-fit: cover;" 
+                                     alt="{{ $restaurant->name }}">
+                            @else
+                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px;">
+                                    <i class="bi bi-image text-muted"></i>
+                                </div>
+                            @endif
                                             <div>
                                                 <strong>{{ $restaurant->name }}</strong>
                                                 <br>
@@ -230,63 +230,53 @@
                                                         <button type="submit" 
                                                                 class="btn btn-outline-success" 
                                                                 title="Aprobar"
-                                                                onclick="return confirm('¿Aprobar este restaurante?')">
+                                                                onclick="confirmApprove(event, '{{ $restaurant->name }}', '{{ route('admin.restaurants.approve', $restaurant) }}')">
                                                             <i class="bi bi-check"></i>
                                                         </button>
                                                     </form>
                                                     <!-- Reject -->
-                                                    <form method="POST" action="{{ route('admin.restaurants.reject', $restaurant) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" 
-                                                                class="btn btn-outline-danger" 
-                                                                title="Rechazar"
-                                                                onclick="return confirm('¿Rechazar este restaurante?')">
-                                                            <i class="bi bi-x"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" 
+                                                            class="btn btn-outline-danger" 
+                                                            title="Rechazar"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#rejectModal"
+                                                            data-restaurant-id="{{ $restaurant->id }}"
+                                                            data-restaurant-name="{{ $restaurant->name }}">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
                                                     @break
                                                     
                                                 @case('approved')
                                                     <!-- Suspend -->
-                                                    <form method="POST" action="{{ route('admin.restaurants.suspend', $restaurant) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" 
-                                                                class="btn btn-outline-warning" 
-                                                                title="Suspender"
-                                                                onclick="return confirm('¿Suspender este restaurante?')">
-                                                            <i class="bi bi-pause"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" 
+                                                            class="btn btn-outline-warning" 
+                                                            title="Suspender"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#suspendModal"
+                                                            data-restaurant-id="{{ $restaurant->id }}"
+                                                            data-restaurant-name="{{ $restaurant->name }}">
+                                                        <i class="bi bi-pause"></i>
+                                                    </button>
                                                     @break
                                                     
                                                 @case('suspended')
                                                     <!-- Reactivate -->
-                                                    <form method="POST" action="{{ route('admin.restaurants.reactivate', $restaurant) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" 
-                                                                class="btn btn-outline-success" 
-                                                                title="Reactivar"
-                                                                onclick="return confirm('¿Reactivar este restaurante?')">
-                                                            <i class="bi bi-play"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success" 
+                                                            title="Reactivar"
+                                                            onclick="confirmReactivate(event, '{{ $restaurant->name }}', '{{ route('admin.restaurants.reactivate', $restaurant) }}')">
+                                                        <i class="bi bi-play"></i>
+                                                    </button>
                                                     @break
                                                     
                                                 @case('rejected')
                                                     <!-- Approve (second chance) -->
-                                                    <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline">
-                                                        @csrf
-                                                        @method('PATCH')
-                                                        <button type="submit" 
-                                                                class="btn btn-outline-success" 
-                                                                title="Aprobar"
-                                                                onclick="return confirm('¿Aprobar este restaurante?')">
-                                                            <i class="bi bi-check"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success" 
+                                                            title="Aprobar"
+                                                            onclick="confirmApprove(event, '{{ $restaurant->name }}', '{{ route('admin.restaurants.approve', $restaurant) }}')">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
                                                     @break
                                             @endswitch
                                         </div>
@@ -332,49 +322,179 @@
     @endif
 </div>
 
-<!-- Success/Error Messages -->
-@if(session('success'))
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
-    <div class="toast show" role="alert">
-        <div class="toast-header bg-success text-white">
-            <i class="bi bi-check-circle me-2"></i>
-            <strong class="me-auto">Éxito</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body">
-            {{ session('success') }}
-        </div>
-    </div>
-</div>
-@endif
 
-@if(session('error'))
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
-    <div class="toast show" role="alert">
-        <div class="toast-header bg-danger text-white">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong class="me-auto">Error</strong>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body">
-            {{ session('error') }}
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel">Rechazar Restaurante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <p>¿Está seguro de que desea rechazar el restaurante <strong id="rejectRestaurantName"></strong>?</p>
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Razón del rechazo <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" required placeholder="Explique por qué se rechaza este restaurante..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rechazar Restaurante</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-@endif
+
+<!-- Suspend Modal -->
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-labelledby="suspendModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="suspendModalLabel">Suspender Restaurante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="suspendForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <p>¿Está seguro de que desea suspender el restaurante <strong id="suspendRestaurantName"></strong>?</p>
+                    <div class="mb-3">
+                        <label for="suspensionReason" class="form-label">Razón de la suspensión <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="suspensionReason" name="suspension_reason" rows="3" required placeholder="Explique por qué se suspende este restaurante..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Suspender Restaurante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
-// Auto-hide toasts after 5 seconds
-document.addEventListener('DOMContentLoaded', function() {
-    const toasts = document.querySelectorAll('.toast');
-    toasts.forEach(function(toast) {
-        setTimeout(function() {
-            const bsToast = new bootstrap.Toast(toast);
-            bsToast.hide();
-        }, 5000);
+// SweetAlert confirmations
+function confirmApprove(event, restaurantName, actionUrl) {
+    event.preventDefault();
+    
+    Swal.fire({
+        title: '¿Aprobar restaurante?',
+        text: `¿Está seguro de que desea aprobar "${restaurantName}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, aprobar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionUrl;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const methodField = document.createElement('input');
+            methodField.type = 'hidden';
+            methodField.name = '_method';
+            methodField.value = 'PATCH';
+            
+            form.appendChild(csrfToken);
+            form.appendChild(methodField);
+            document.body.appendChild(form);
+            form.submit();
+        }
     });
+}
+
+function confirmReactivate(event, restaurantName, actionUrl) {
+    event.preventDefault();
+    
+    Swal.fire({
+        title: '¿Reactivar restaurante?',
+        text: `¿Está seguro de que desea reactivar "${restaurantName}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, reactivar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = actionUrl;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const methodField = document.createElement('input');
+            methodField.type = 'hidden';
+            methodField.name = '_method';
+            methodField.value = 'PATCH';
+            
+            form.appendChild(csrfToken);
+            form.appendChild(methodField);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Handle reject modal
+    const rejectModal = document.getElementById('rejectModal');
+    if (rejectModal) {
+        rejectModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const restaurantId = button.getAttribute('data-restaurant-id');
+            const restaurantName = button.getAttribute('data-restaurant-name');
+            
+            const form = document.getElementById('rejectForm');
+            const nameElement = document.getElementById('rejectRestaurantName');
+            
+            form.action = `/admin/restaurants/${restaurantId}/reject`;
+            nameElement.textContent = restaurantName;
+            
+            // Clear previous reason
+            document.getElementById('rejectionReason').value = '';
+        });
+    }
+    
+    // Handle suspend modal
+    const suspendModal = document.getElementById('suspendModal');
+    if (suspendModal) {
+        suspendModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const restaurantId = button.getAttribute('data-restaurant-id');
+            const restaurantName = button.getAttribute('data-restaurant-name');
+            
+            const form = document.getElementById('suspendForm');
+            const nameElement = document.getElementById('suspendRestaurantName');
+            
+            form.action = `/admin/restaurants/${restaurantId}/suspend`;
+            nameElement.textContent = restaurantName;
+            
+            // Clear previous reason
+            document.getElementById('suspensionReason').value = '';
+        });
+    }
 });
 </script>
 @endpush

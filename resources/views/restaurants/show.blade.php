@@ -371,31 +371,59 @@
 <script>
 // Toggle favorite functionality
 function toggleFavorite(restaurantId) {
-    fetch(`/restaurants/${restaurantId}/favorite`, {
+    fetch(`/api/restaurants/${restaurantId}/favorite`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
-        const btn = document.getElementById('favorite-btn');
-        const icon = btn.querySelector('i');
-        
-        if (data.favorited) {
-            btn.className = 'btn btn-danger';
-            icon.className = 'bi bi-heart-fill me-1';
-            btn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Quitar de favoritos';
-        } else {
-            btn.className = 'btn btn-outline-secondary';
-            icon.className = 'bi bi-heart me-1';
-            btn.innerHTML = '<i class="bi bi-heart me-1"></i>Agregar a favoritos';
+        if (data.success) {
+            const btn = document.getElementById('favorite-btn');
+            
+            if (data.favorited) {
+                btn.className = 'btn btn-danger';
+                btn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Quitar de favoritos';
+                Swal.fire({
+                    title: '¡Agregado a favoritos!',
+                    text: 'El restaurante se ha agregado a tu lista de favoritos.',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } else {
+                btn.className = 'btn btn-outline-secondary';
+                btn.innerHTML = '<i class="bi bi-heart me-1"></i>Agregar a favoritos';
+                Swal.fire({
+                    title: 'Eliminado de favoritos',
+                    text: 'El restaurante se ha eliminado de tu lista de favoritos.',
+                    icon: 'info',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Ocurrió un error al actualizar favoritos');
+        Swal.fire({
+            title: 'Error',
+            text: 'Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.',
+            icon: 'error',
+            confirmButtonText: 'Entendido'
+        });
     });
 }
 </script>

@@ -65,18 +65,22 @@ class Photo extends Model
     }
 
     /**
-     * Accessor para obtener la URL completa
-     * Genera la URL completa de la imagen
+     * Get the full URL for the photo
      */
     public function getFullUrlAttribute()
     {
-        // Si la URL ya es completa (http/https), la retorna tal como está
-        if (filter_var($this->url, FILTER_VALIDATE_URL)) {
-            return $this->url;
+        if ($this->url) {
+            // Check if it's an external URL (starts with http:// or https://)
+            if (filter_var($this->url, FILTER_VALIDATE_URL) && 
+                (str_starts_with($this->url, 'http://') || str_starts_with($this->url, 'https://'))) {
+                return $this->url;
+            }
+            
+            // It's a local file, add storage path
+            return asset('storage/' . $this->url);
         }
         
-        // Si es una ruta relativa, la convierte a URL completa
-        return asset('storage/' . $this->url);
+        return asset('images/placeholder-restaurant.svg');
     }
 
     /**

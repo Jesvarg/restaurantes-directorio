@@ -97,11 +97,11 @@ class Restaurant extends Model
 
     /**
      * Scope para restaurantes activos
-     * Filtra solo restaurantes con status = 'active'
+     * Filtra solo restaurantes con status = 'approved'
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', 'approved');
     }
 
     /**
@@ -169,5 +169,26 @@ class Restaurant extends Model
     public function getPriceRangeDisplayAttribute()
     {
         return str_repeat('$', $this->price_range);
+    }
+
+    /**
+     * Get the primary photo URL with fallback
+     */
+    public function getPrimaryPhotoUrlAttribute()
+    {
+        $primaryPhoto = $this->photos()->where('is_primary', true)->first();
+        
+        if ($primaryPhoto) {
+            return $primaryPhoto->full_url;
+        }
+        
+        // Fallback to first photo if no primary
+        $firstPhoto = $this->photos()->first();
+        if ($firstPhoto) {
+            return $firstPhoto->full_url;
+        }
+        
+        // Default placeholder
+        return asset('images/placeholder-restaurant.svg');
     }
 }

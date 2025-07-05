@@ -20,7 +20,7 @@
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div class="card h-100 shadow-sm">
                                 @if($restaurant->photos->count() > 0)
-                                    <img src="{{ asset('storage/' . $restaurant->photos->first()->url) }}" 
+                                    <img src="{{ $restaurant->primary_photo_url }}" 
                                          class="card-img-top" 
                                          alt="{{ $restaurant->name }}"
                                          style="height: 200px; object-fit: cover;">
@@ -48,7 +48,7 @@
                                             @endfor
                                             <small class="text-muted ms-1">({{ $restaurant->reviews->count() }})</small>
                                         </div>
-                                        <span class="badge bg-success">${{ $restaurant->price_range }}</span>
+                                        <span class="badge bg-success">{{ $restaurant->priceRangeDisplay }}</span>
                                     </div>
                                     
                                     <div class="d-flex gap-2">

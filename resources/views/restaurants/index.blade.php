@@ -7,13 +7,13 @@
 <section class="hero-section">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
-                <h1 class="display-4 fw-bold mb-4">
+            <div class="col-lg-10 text-center">
+                <h1 class="display-5 fw-bold mb-3">
                     <i class="bi bi-geo-alt-fill me-3"></i>
                     Descubre Restaurantes Increíbles
                 </h1>
                 <p class="lead mb-5">
-                    Encuentra los mejores lugares para comer cerca de ti. Explora, comparte y disfruta experiencias gastronómicas únicas.
+                    Encuentra los mejores lugares para comer cerca de ti.
                 </p>
                 
                 <!-- Search Form -->
@@ -42,7 +42,7 @@
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="bi bi-search me-1"></i>Buscar
+                                <i class="bi bi-search me-1"></i>
                             </button>
                         </div>
                     </form>
@@ -131,15 +131,9 @@
                     <div class="card restaurant-card h-100">
                         <!-- Restaurant Image -->
                         <div class="position-relative">
-                            @if($restaurant->primaryPhoto)
-                                <img src="{{ $restaurant->primaryPhoto->url }}" 
-                                     class="card-img-top restaurant-image" 
-                                     alt="{{ $restaurant->primaryPhoto->alt_text }}">
-                            @else
-                                <div class="card-img-top restaurant-image d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
-                                </div>
-                            @endif
+                            <img src="{{ $restaurant->primary_photo_url }}"
+                             class="card-img-top restaurant-image"
+                             alt="Imagen de {{ $restaurant->name }}">
                             
                             <!-- Price Badge -->
                             <span class="price-badge">
@@ -262,33 +256,81 @@
 // Toggle favorite functionality
 function toggleFavorite(restaurantId) {
     @auth
-        fetch(`/restaurants/${restaurantId}/favorite`, {
+        fetch(`/api/restaurants/${restaurantId}/favorite`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
-            const btn = document.getElementById(`favorite-btn-${restaurantId}`);
-            const icon = btn.querySelector('i');
-            
-            if (data.favorited) {
-                btn.className = 'btn btn-outline-danger';
-                icon.className = 'bi bi-heart-fill';
+            if (data.success) {
+                const btn = document.getElementById(`favorite-btn-${restaurantId}`);
+                const icon = btn.querySelector('i');
+                
+                if (data.favorited) {
+                    btn.className = 'btn btn-outline-danger';
+                    icon.className = 'bi bi-heart-fill';
+                } else {
+                    btn.className = 'btn btn-outline-secondary';
+                    icon.className = 'bi bi-heart';
+                }
+                
+                // Mostrar mensaje de éxito con SweetAlert
+                if (data.favorited) {
+                    Swal.fire({
+                        title: '¡Agregado a favoritos!',
+                        text: 'El restaurante se ha agregado a tu lista de favoritos.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Eliminado de favoritos',
+                        text: 'El restaurante se ha eliminado de tu lista de favoritos.',
+                        icon: 'info',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }
             } else {
-                btn.className = 'btn btn-outline-secondary';
-                icon.className = 'bi bi-heart';
+                throw new Error(data.message || 'Error al actualizar favoritos');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Ocurrió un error al actualizar favoritos');
+            Swal.fire({
+                title: 'Error',
+                text: 'Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.',
+                icon: 'error',
+                confirmButtonText: 'Entendido'
+            });
         });
     @else
-        alert('Debes iniciar sesión para agregar favoritos');
-        window.location.href = '{{ route("login") }}';
+        Swal.fire({
+            title: 'Inicia sesión',
+            text: 'Debes iniciar sesión para agregar restaurantes a favoritos.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Iniciar sesión',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '{{ route("login") }}';
+            }
+        });
     @endauth
 }
 
@@ -303,5 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+
 </script>
 @endpush

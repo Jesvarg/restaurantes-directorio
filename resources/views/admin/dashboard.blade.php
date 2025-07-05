@@ -93,16 +93,22 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <a href="{{ route('admin.restaurants.pending') }}" class="btn btn-warning w-100">
                                 <i class="bi bi-clock-history me-2"></i>
                                 Revisar Pendientes ({{ $pendingRestaurants }})
                             </a>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <a href="{{ route('admin.restaurants.all') }}" class="btn btn-primary w-100">
                                 <i class="bi bi-list-ul me-2"></i>
                                 Ver Todos los Restaurantes
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ route('admin.users') }}" class="btn btn-info w-100">
+                                <i class="bi bi-people me-2"></i>
+                                Gestionar Usuarios ({{ $totalUsers }})
                             </a>
                         </div>
                     </div>
@@ -142,17 +148,10 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($restaurant->primaryPhoto)
-                                                <img src="{{ $restaurant->primaryPhoto->url }}" 
+                                            <img src="{{ $restaurant->primary_photo_url }}" 
                                                      class="rounded me-2" 
                                                      style="width: 40px; height: 40px; object-fit: cover;" 
                                                      alt="{{ $restaurant->name }}">
-                                            @else
-                                                <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
-                                                     style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-image text-muted"></i>
-                                                </div>
-                                            @endif
                                             <div>
                                                 <strong>{{ $restaurant->name }}</strong>
                                                 <br>
@@ -185,13 +184,13 @@
                                                title="Ver">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline">
+                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline" id="approve-form-{{ $restaurant->id }}">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="submit" 
+                                                <button type="button" 
                                                         class="btn btn-outline-success" 
                                                         title="Aprobar"
-                                                        onclick="return confirm('¿Aprobar este restaurante?')">
+                                                        onclick="confirmApproveRestaurant({{ $restaurant->id }}, '{{ $restaurant->name }}')">
                                                     <i class="bi bi-check"></i>
                                                 </button>
                                             </form>
@@ -221,3 +220,25 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function confirmApproveRestaurant(restaurantId, restaurantName) {
+    Swal.fire({
+        title: '¿Aprobar este restaurante?',
+        text: `¿Estás seguro de que quieres aprobar "${restaurantName}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, aprobar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById(`approve-form-${restaurantId}`).submit();
+        }
+    });
+}
+</script>
+@endpush

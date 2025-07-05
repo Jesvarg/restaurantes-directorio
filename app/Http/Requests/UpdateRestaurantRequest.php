@@ -150,6 +150,14 @@ class UpdateRestaurantRequest extends FormRequest
                 'url',
                 'regex:/\.(jpeg|jpg|png|gif|webp)(\?.*)?$/i', // Debe terminar en extensión de imagen
             ],
+            'delete_photos' => [
+                'nullable',
+                'array',
+            ],
+            'delete_photos.*' => [
+                'integer',
+                'exists:photos,id',
+            ],
             // Campos adicionales para administradores
             'status' => [
                 'sometimes',
@@ -254,7 +262,7 @@ class UpdateRestaurantRequest extends FormRequest
 
         // Solo permitir cambio de estado a administradores
         if (Auth::user()->role !== 'admin') {
-            unset($rules['status']);
+            $this->request->remove('status');
         }
     }
 

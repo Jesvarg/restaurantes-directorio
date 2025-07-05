@@ -25,6 +25,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'suspended_at',
+        'suspension_reason',
     ];
 
     /**
@@ -44,6 +46,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'suspended_at' => 'datetime',
         'password' => 'hashed',
     ];
 
@@ -75,6 +78,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Alias para la relación de favoritos
+     * Método alternativo para acceder a los restaurantes favoritos
+     */
+    public function favoriteRestaurants(): BelongsToMany
+    {
+        return $this->favorites();
+    }
+
+    /**
      * Scope para usuarios activos
      * Filtra usuarios que han verificado su email
      */
@@ -90,5 +102,30 @@ class User extends Authenticatable
     public function getNameAttribute($value)
     {
         return ucwords($value);
+    }
+
+    /**
+     * Accessor para obtener el estado del usuario
+     * Determina si el usuario está activo o suspendido
+     */
+    public function getStatusAttribute()
+    {
+        return $this->suspended_at ? 'suspended' : 'active';
+    }
+
+    /**
+     * Scope para usuarios activos (no suspendidos)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('suspended_at');
+    }
+
+    /**
+     * Scope para usuarios suspendidos
+     */
+    public function scopeSuspended($query)
+    {
+        return $query->whereNotNull('suspended_at');
     }
 }

@@ -105,33 +105,40 @@ class RestaurantSeeder extends Seeder
             // Assign owner
             $restaurantData['user_id'] = $owners[$index % $owners->count()]->id;
             
-            $restaurant = Restaurant::create($restaurantData);
+            // Use firstOrCreate to prevent duplicates
+            $restaurant = Restaurant::firstOrCreate(
+                ['name' => $restaurantData['name']],
+                $restaurantData
+            );
             
-            // Attach random categories
-            $randomCategories = $categories->random(rand(1, 3));
-            $restaurant->categories()->attach($randomCategories->pluck('id'));
-            
-            // Add sample photos
-            $samplePhotos = [
-                'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=600&fit=crop',
-                'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop'
-            ];
-            
-            // Create 2-3 photos per restaurant
-            $numPhotos = rand(2, 3);
-            for ($i = 0; $i < $numPhotos; $i++) {
-                $restaurant->photos()->create([
-                    'url' => $samplePhotos[($index + $i) % count($samplePhotos)],
-                    'alt_text' => $restaurant->name . ' - Imagen ' . ($i + 1),
-                    'is_primary' => $i === 0, // Primera foto como principal
-                    'order' => $i + 1
-                ]);
+            // Only attach categories and photos if restaurant was just created
+            if ($restaurant->wasRecentlyCreated) {
+                // Attach random categories
+                $randomCategories = $categories->random(rand(1, 3));
+                $restaurant->categories()->attach($randomCategories->pluck('id'));
+                
+                // Add sample photos
+                $samplePhotos = [
+                    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=600&fit=crop',
+                    'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&h=600&fit=crop'
+                ];
+                
+                // Create 2-3 photos per restaurant
+                $numPhotos = rand(2, 3);
+                for ($i = 0; $i < $numPhotos; $i++) {
+                    $restaurant->photos()->create([
+                        'url' => $samplePhotos[($index + $i) % count($samplePhotos)],
+                        'alt_text' => $restaurant->name . ' - Imagen ' . ($i + 1),
+                        'is_primary' => $i === 0, // Primera foto como principal
+                        'order' => $i + 1
+                    ]);
+                }
             }
         }
 
-        echo "Restaurants seeded successfully!\n";
+        $this->command->info('Restaurants seeded successfully!');
     }
 }

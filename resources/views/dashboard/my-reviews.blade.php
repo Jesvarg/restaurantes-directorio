@@ -23,10 +23,10 @@
                                     <div class="row">
                                         <div class="col-md-3">
                                             @if($review->restaurant->photos->count() > 0)
-                                                <img src="{{ asset('storage/' . $review->restaurant->photos->first()->url) }}" 
-                                                     class="img-fluid rounded" 
-                                                     alt="{{ $review->restaurant->name }}"
-                                                     style="height: 120px; width: 100%; object-fit: cover;">
+                                <img src="{{ $review->restaurant->primary_photo_url }}" 
+                                     class="img-fluid rounded" 
+                                     alt="{{ $review->restaurant->name }}"
+                                     style="height: 120px; width: 100%; object-fit: cover;">
                                             @else
                                                 <div class="bg-light rounded d-flex align-items-center justify-content-center" 
                                                      style="height: 120px;">

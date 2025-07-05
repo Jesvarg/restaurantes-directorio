@@ -399,6 +399,61 @@ document.getElementById('password_confirmation').addEventListener('input', funct
     }
 });
 
+// Form validation with visual feedback
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentNode.querySelector('.client-error-message');
+    
+    // Remove existing error message
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Add error styling
+    field.classList.add('is-invalid');
+    
+    // Create and add error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback client-error-message';
+    errorDiv.textContent = message;
+    field.parentNode.appendChild(errorDiv);
+    
+    // Focus the field
+    field.focus();
+}
+
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentNode.querySelector('.client-error-message');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.classList.remove('is-invalid');
+}
+
+// Clear errors on input
+document.getElementById('name').addEventListener('input', function() {
+    clearFieldError('name');
+});
+
+document.getElementById('email').addEventListener('input', function() {
+    clearFieldError('email');
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    clearFieldError('password');
+});
+
+document.getElementById('password_confirmation').addEventListener('input', function() {
+    clearFieldError('password_confirmation');
+});
+
+document.getElementById('terms').addEventListener('change', function() {
+    clearFieldError('terms');
+});
+
 // Form validation
 document.getElementById('registerForm').addEventListener('submit', function(e) {
     const name = document.getElementById('name').value.trim();
@@ -408,52 +463,49 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     const terms = document.getElementById('terms').checked;
     
     let isValid = true;
-    let errorMessage = '';
+    
+    // Clear all previous errors
+    clearFieldError('name');
+    clearFieldError('email');
+    clearFieldError('password');
+    clearFieldError('password_confirmation');
+    clearFieldError('terms');
     
     // Name validation
     if (name.length < 2) {
+        showFieldError('name', 'El nombre debe tener al menos 2 caracteres.');
         isValid = false;
-        errorMessage = 'El nombre debe tener al menos 2 caracteres.';
-        document.getElementById('name').focus();
     }
     
     // Email validation
-    else if (!email) {
+    if (!email) {
+        showFieldError('email', 'Por favor ingresa tu correo electrónico.');
         isValid = false;
-        errorMessage = 'Por favor ingresa tu correo electrónico.';
-        document.getElementById('email').focus();
-    }
-    
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('email', 'Por favor ingresa un correo electrónico válido.');
         isValid = false;
-        errorMessage = 'Por favor ingresa un correo electrónico válido.';
-        document.getElementById('email').focus();
     }
     
     // Password validation
-    else if (password.length < 8) {
+    if (password.length < 8) {
+        showFieldError('password', 'La contraseña debe tener al menos 8 caracteres.');
         isValid = false;
-        errorMessage = 'La contraseña debe tener al menos 8 caracteres.';
-        document.getElementById('password').focus();
     }
     
     // Password confirmation validation
-    else if (password !== passwordConfirmation) {
+    if (password !== passwordConfirmation) {
+        showFieldError('password_confirmation', 'Las contraseñas no coinciden.');
         isValid = false;
-        errorMessage = 'Las contraseñas no coinciden.';
-        document.getElementById('password_confirmation').focus();
     }
     
     // Terms validation
-    else if (!terms) {
+    if (!terms) {
+        showFieldError('terms', 'Debes aceptar los términos y condiciones.');
         isValid = false;
-        errorMessage = 'Debes aceptar los términos y condiciones.';
-        document.getElementById('terms').focus();
     }
     
     if (!isValid) {
         e.preventDefault();
-        alert(errorMessage);
         return false;
     }
 });

@@ -14,35 +14,44 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // Create admin user
-        User::create([
-            'name' => 'Administrador',
-            'email' => 'admin@restaurantes.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@restaurantes.com'],
+            [
+                'name' => 'Administrador',
+                'email_verified_at' => now(),
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+            ]
+        );
 
         // Create restaurant owner
-        User::create([
-            'name' => 'Propietario Demo',
-            'email' => 'owner@restaurantes.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('owner123'),
-            'role' => 'owner',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'owner@restaurantes.com'],
+            [
+                'name' => 'Propietario Demo',
+                'email_verified_at' => now(),
+                'password' => Hash::make('owner123'),
+                'role' => 'owner',
+            ]
+        );
 
         // Create regular users
-        User::create([
-            'name' => 'Usuario Demo',
-            'email' => 'user@restaurantes.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('user123'),
-            'role' => 'user',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'user@restaurantes.com'],
+            [
+                'name' => 'Usuario Demo',
+                'email_verified_at' => now(),
+                'password' => Hash::make('user123'),
+                'role' => 'user',
+            ]
+        );
 
-        // Create additional test users
-        User::factory(10)->create();
+        // Create additional test users only if they don't exist
+        $existingUsersCount = User::where('email', 'like', 'test%@example.com')->count();
+        if ($existingUsersCount < 10) {
+            User::factory(10 - $existingUsersCount)->create();
+        }
 
-        echo "Users seeded successfully!\n";
+        $this->command->info('Users seeded successfully!');
     }
 }

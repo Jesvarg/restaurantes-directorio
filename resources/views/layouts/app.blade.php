@@ -6,8 +6,7 @@
     {{-- Agregar en el head --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-
-    <title>{{ config('app.name', 'Directorio Restaurantes') }} - @yield('title', 'Inicio')</title>
+    <title>{{ config('app.name', 'Directorio Restaurantes') }} u- @yield('title', 'Inicio')</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
@@ -24,12 +23,7 @@
     
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
 
-    
-    <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    
     <!-- Custom Styles -->
     <style>
         :root {
@@ -172,38 +166,6 @@
         main {
             flex: 1;
         }
-
-        /* Admin specific styles */
-        .admin-header {
-            background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-            color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-        }
-
-        .admin-card {
-            border-left: 4px solid var(--admin-primary);
-            transition: all 0.3s ease;
-        }
-
-        .admin-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-        }
-
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-
-        .action-btn:hover {
-            transform: scale(1.05);
-        }
     </style>
 
     @stack('styles')
@@ -261,9 +223,6 @@
                                 <li><a class="dropdown-item" href="{{ route('dashboard.reviews') }}">
                                     <i class="bi bi-chat-left-text me-2"></i>Mis Reseñas
                                 </a></li>
-                                <li><a class="dropdown-item" href="{{ route('profile.show') }}">
-                                    <i class="bi bi-person-gear me-2"></i>Mi Perfil
-                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
@@ -283,64 +242,38 @@
 
     <!-- Flash Messages -->
     @if(session('success'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: '¡Éxito!',
-                    text: '{{ session('success') }}',
-                    icon: 'success',
-                    timer: 4000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-            });
-        </script>
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
     @endif
-    
+
     @if(session('error'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Error',
-                    text: '{{ session('error') }}',
-                    icon: 'error',
-                    confirmButtonText: 'Entendido'
-                });
-            });
-        </script>
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
     @endif
-    
-    @if(session('warning'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Atención',
-                    text: '{{ session('warning') }}',
-                    icon: 'warning',
-                    timer: 4000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-            });
-        </script>
-    @endif
-    
-    @if(session('info'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Información',
-                    text: '{{ session('info') }}',
-                    icon: 'info',
-                    timer: 4000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-            });
-        </script>
+
+    @if($errors->any())
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Por favor corrige los siguientes errores:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
     @endif
 
     <!-- Main Content -->
@@ -358,7 +291,7 @@
                         {{ config('app.name', 'Directorio de Restaurantes') }}
                     </h5>
                     <p class="text-light mb-0">
-                        Descubre los mejores restaurantes de tu ciudad y disfruta experiencias gastronómicas únicas.
+                        Descubre los mejores restaurantes de tu ciudad   y disfruta experiencias gastronómicas únicas.
                     </p>
                 </div>
                 <div class="col-md-3">
@@ -405,12 +338,6 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    
-    <!-- jQuery (still needed for some functionality) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     @stack('scripts')
 </body>
@@ -462,6 +389,12 @@
         transform: scale(1.05);
     }
 </style>
+
+
+
+
+
+
 </body>
 </html>
 
@@ -2045,4 +1978,52 @@
         --admin-warning: #f39c12;
         --admin-danger: #e74c3c;
         --admin-dark: #2c3e50;
+    }
+
+    /* Admin specific styles */
+    .admin-header {
+        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .admin-card {
+        border-left: 4px solid var(--admin-primary);
+        transition: all 0.3s ease;
+    }
+
+    .admin-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+    }
+
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
 </style>
+</body>
+</html>
+
+<style>
+    :root {
+        --primary-color: #e74c3c;
+        --secondary-color: #34495e;
+        --accent-color: #f39c12;
+        --light-bg: #f8f9fa;
+        --dark-text: #2c3e50;
+        --admin-primary: #3498db;
+        --admin-success: #27ae60;
+        --admin-warning: #f39c12;
+        --admin-danger: #e74c3c;
+        --admin-dark: #2c3e50;

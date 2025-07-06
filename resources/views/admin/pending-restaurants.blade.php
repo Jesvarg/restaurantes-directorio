@@ -54,7 +54,6 @@
                     <span class="badge bg-warning">{{ ucfirst($restaurant->status) }}</span>
                 </div>
                 
-                @if($restaurant->photos->count() > 0)
                 <div class="position-relative">
                     <img src="{{ $restaurant->primary_photo_url }}" 
                          class="card-img-top" 

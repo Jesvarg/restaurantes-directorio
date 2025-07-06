@@ -392,38 +392,17 @@ function toggleFavorite(restaurantId) {
             if (data.favorited) {
                 btn.className = 'btn btn-danger';
                 btn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Quitar de favoritos';
-                Swal.fire({
-                    title: '¡Agregado a favoritos!',
-                    text: 'El restaurante se ha agregado a tu lista de favoritos.',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
+                toastr.success('Restaurante agregado a favoritos');
             } else {
                 btn.className = 'btn btn-outline-secondary';
                 btn.innerHTML = '<i class="bi bi-heart me-1"></i>Agregar a favoritos';
-                Swal.fire({
-                    title: 'Eliminado de favoritos',
-                    text: 'El restaurante se ha eliminado de tu lista de favoritos.',
-                    icon: 'info',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
+                toastr.info('Restaurante eliminado de favoritos');
             }
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        Swal.fire({
-            title: 'Error',
-            text: 'Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.',
-            icon: 'error',
-            confirmButtonText: 'Entendido'
-        });
+        toastr.error('Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.');
     });
 }
 </script>

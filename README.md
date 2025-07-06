@@ -180,7 +180,6 @@ Modifica el archivo `.env` para personalizar:
 
 ## Funcionalidades Futuras
 
-- [ ] Integración de Chatbot
 - [ ] Sistema de notificaciones por email
 - [ ] Integración con mapas (Google Maps/OpenStreetMap)
 - [ ] Sistema de reservas

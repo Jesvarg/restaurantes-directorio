@@ -148,10 +148,17 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="{{ $restaurant->primary_photo_url }}" 
+                                            @if($restaurant->primaryPhoto)
+                                                <img src="{{ $restaurant->primaryPhoto->url }}" 
                                                      class="rounded me-2" 
                                                      style="width: 40px; height: 40px; object-fit: cover;" 
                                                      alt="{{ $restaurant->name }}">
+                                            @else
+                                                <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-image text-muted"></i>
+                                                </div>
+                                            @endif
                                             <div>
                                                 <strong>{{ $restaurant->name }}</strong>
                                                 <br>
@@ -184,13 +191,13 @@
                                                title="Ver">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline" id="approve-form-{{ $restaurant->id }}">
+                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')
-                                                <button type="button" 
+                                                <button type="submit" 
                                                         class="btn btn-outline-success" 
                                                         title="Aprobar"
-                                                        onclick="confirmApproveRestaurant({{ $restaurant->id }}, '{{ $restaurant->name }}')">
+                                                        onclick="return confirm('¿Aprobar este restaurante?')">
                                                     <i class="bi bi-check"></i>
                                                 </button>
                                             </form>
@@ -220,25 +227,3 @@
     @endif
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function confirmApproveRestaurant(restaurantId, restaurantName) {
-    Swal.fire({
-        title: '¿Aprobar este restaurante?',
-        text: `¿Estás seguro de que quieres aprobar "${restaurantName}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, aprobar',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById(`approve-form-${restaurantId}`).submit();
-        }
-    });
-}
-</script>
-@endpush

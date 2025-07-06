@@ -46,7 +46,6 @@
                                        name="name" 
                                        value="{{ old('name', $restaurant->name) }}"
                                        placeholder="Ej: La Parrilla del Chef"
-                                       autocomplete="organization"
                                        required>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -130,7 +129,6 @@
                                        name="address" 
                                        value="{{ old('address', $restaurant->address) }}"
                                        placeholder="Ej: Av. Principal 123, Centro, Ciudad"
-                                       autocomplete="street-address"
                                        required>
                                 @error('address')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -145,8 +143,7 @@
                                        id="phone" 
                                        name="phone" 
                                        value="{{ old('phone', $restaurant->phone) }}"
-                                       placeholder="Ej: +1 234 567 8900"
-                                       autocomplete="tel">
+                                       placeholder="Ej: +1 234 567 8900">
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -160,8 +157,7 @@
                                        id="email" 
                                        name="email" 
                                        value="{{ old('email', $restaurant->email) }}"
-                                       placeholder="Ej: contacto@restaurante.com"
-                                       autocomplete="email">
+                                       placeholder="Ej: contacto@restaurante.com">
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -175,8 +171,7 @@
                                        id="website" 
                                        name="website" 
                                        value="{{ old('website', $restaurant->website) }}"
-                                       placeholder="Ej: https://www.restaurante.com"
-                                       autocomplete="url">
+                                       placeholder="Ej: https://www.restaurante.com">
                                 @error('website')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -340,30 +335,34 @@
                             </div>
                             
                             <div class="col-12 mb-3">
-                                <div class="d-flex flex-wrap gap-2" id="currentPhotosContainer">
+                                <div class="row g-2">
                                     @foreach($restaurant->photos as $photo)
-                                        <div class="position-relative" id="photo_{{ $photo->id }}" style="width: 150px; height: 150px;">
-                                            <img src="{{ $photo->url }}" class="rounded" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ $photo->alt_text }}">
-                                            @if($photo->is_primary)
-                                                <span class="position-absolute top-0 start-0 badge bg-primary m-1" style="font-size: 0.7rem;">
-                                                    <i class="bi bi-star-fill"></i> Principal
-                                                </span>
-                                            @endif
-                                            <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" 
-                                                    onclick="confirmDeletePhoto({{ $photo->id }})" 
-                                                    style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; font-size: 0.7rem;">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                            <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom" style="font-size: 0.7rem;">
-                                                Foto {{ $loop->iteration }}
+                                        <div class="col-md-3 col-sm-4 col-6">
+                                            <div class="card position-relative">
+                                                <img src="{{ $photo->url }}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="{{ $photo->alt_text }}">
+                                                @if($photo->is_primary)
+                                                    <span class="position-absolute top-0 start-0 badge bg-primary m-1">
+                                                        <i class="bi bi-star-fill"></i> Principal
+                                                    </span>
+                                                @endif
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <small class="text-muted">Foto {{ $loop->iteration }}</small>
+                                                        <div class="form-check form-check-inline">
+                                                            <input class="form-check-input" type="checkbox" name="delete_photos[]" value="{{ $photo->id }}" id="delete_photo_{{ $photo->id }}">
+                                                            <label class="form-check-label text-danger small" for="delete_photo_{{ $photo->id }}">
+                                                                Eliminar
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <input type="hidden" name="delete_photos[]" value="{{ $photo->id }}" id="delete_input_{{ $photo->id }}" disabled>
                                         </div>
                                     @endforeach
                                 </div>
                                 <div class="form-text mt-2">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    Haz clic en el botón de eliminar para quitar fotos. Los cambios se aplicarán al actualizar.
+                                    Marca las fotos que deseas eliminar. Esta acción no se puede deshacer.
                                 </div>
                             </div>
                         </div>
@@ -415,18 +414,17 @@
                                         </div>
                                         
                                         <!-- Photo Preview -->
-                                        <div id="photoPreview" class="d-flex flex-wrap gap-2 mt-2" style="display: none;"></div>
+                                        <div id="photoPreview" class="row g-2 mt-2" style="display: none;"></div>
                                     </div>
                                     
                                     <!-- URL Tab -->
                                     <div class="tab-pane fade" id="url-pane" role="tabpanel">
-                                        <label class="form-label" for="photo_url_0">URLs de Imágenes</label>
+                                        <label class="form-label">URLs de Imágenes</label>
                                         <div id="photoUrlsContainer">
                                             <div class="input-group mb-2">
                                                 <input type="url" 
                                                        class="form-control @error('photo_urls.0') is-invalid @enderror" 
                                                        name="photo_urls[]" 
-                                                       id="photo_url_0"
                                                        placeholder="https://ejemplo.com/imagen.jpg">
                                                 <button type="button" class="btn btn-outline-danger" onclick="removePhotoUrl(this)" style="display: none;">
                                                     <i class="bi bi-trash"></i>
@@ -460,10 +458,10 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="d-flex gap-3 justify-content-end">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="confirmCancel()">
+                                    <a href="{{ route('restaurants.show', $restaurant) }}" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left me-1"></i>Cancelar
-                                    </button>
-                                    <button type="button" class="btn btn-primary" onclick="confirmUpdate()">
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-check-circle me-1"></i>Actualizar Restaurante
                                     </button>
                                 </div>
@@ -490,10 +488,8 @@
                                     <span class="badge bg-success">Activo</span>
                                 @elseif($restaurant->status === 'pending')
                                     <span class="badge bg-warning">Pendiente de Aprobación</span>
-                                @elseif($restaurant->status === 'inactive')
-                                    <span class="badge bg-danger">Inactivo</span>
                                 @else
-                                    <span class="badge bg-secondary">{{ ucfirst($restaurant->status) }}</span>
+                                    <span class="badge bg-danger">Inactivo</span>
                                 @endif
                             </p>
                             <p class="mb-0 small text-muted">
@@ -501,10 +497,8 @@
                                     Tu restaurante está siendo revisado por nuestro equipo. Te notificaremos cuando sea aprobado.
                                 @elseif($restaurant->status === 'active')
                                     Tu restaurante está visible públicamente en el directorio.
-                                @elseif($restaurant->status === 'inactive')
-                                    Tu restaurante no está visible públicamente. Contacta al administrador para más información.
                                 @else
-                                    Estado: {{ $restaurant->status }}. Contacta al administrador para más información.
+                                    Tu restaurante no está visible públicamente. Contacta al administrador para más información.
                                 @endif
                             </p>
                         </div>
@@ -539,87 +533,87 @@ function toggleHours(day) {
     }
 }
 
-// Photo preview functionality with dynamic removal
-let selectedFiles = [];
-let fileCounter = 0;
-
+// Photo preview functionality
 document.getElementById('photos').addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
-    
-    // Add new files to selectedFiles array
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-            selectedFiles.push({
-                file: file,
-                id: fileCounter++,
-                name: file.name
-            });
-        }
-    });
-    
-    updatePhotoPreview();
-    updateFileInput();
-});
-
-function updatePhotoPreview() {
+    const files = e.target.files;
     const preview = document.getElementById('photoPreview');
+    
+    // Clear previous previews
     preview.innerHTML = '';
     
-    if (selectedFiles.length > 0) {
+    if (files.length > 0) {
         preview.style.display = 'block';
         
-        selectedFiles.forEach((fileObj, index) => {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const photoDiv = document.createElement('div');
-                photoDiv.className = 'position-relative';
-                photoDiv.style.cssText = 'width: 150px; height: 150px;';
-                photoDiv.setAttribute('data-file-id', fileObj.id);
+        Array.from(files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
                 
-                photoDiv.innerHTML = `
-                    <img src="${e.target.result}" class="rounded" style="width: 100%; height: 100%; object-fit: cover;" alt="Preview ${index + 1}">
-                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" 
-                            onclick="removeSelectedFile(${fileObj.id})" 
-                            style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; font-size: 0.7rem;">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom" style="font-size: 0.7rem;">
-                        ${fileObj.name.length > 15 ? fileObj.name.substring(0, 15) + '...' : fileObj.name}
-                    </div>
-                `;
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-4 col-6';
+                    
+                    col.innerHTML = `
+                        <div class="card">
+                            <img src="${e.target.result}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="Preview ${index + 1}">
+                            <div class="card-body p-2">
+                                <small class="text-muted">${file.name}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    preview.appendChild(col);
+                };
                 
-                preview.appendChild(photoDiv);
-            };
-            
-            reader.readAsDataURL(fileObj.file);
+                reader.readAsDataURL(file);
+            }
         });
     } else {
         preview.style.display = 'none';
     }
-}
+});
 
-function removeSelectedFile(fileId) {
-    selectedFiles = selectedFiles.filter(fileObj => fileObj.id !== fileId);
-    updatePhotoPreview();
-    updateFileInput();
-}
-
-function updateFileInput() {
-    const input = document.getElementById('photos');
-    const dt = new DataTransfer();
-    
-    selectedFiles.forEach(fileObj => {
-        dt.items.add(fileObj.file);
-    });
-    
-    input.files = dt.files;
-}
-
-// Form validation - prevent default form submission since we use custom confirmation
+// Form validation
+// Add category validation to the main form submit handler
 document.getElementById('restaurantForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    return false;
+    const categories = document.querySelectorAll('input[name="categories[]"]:checked');
+    
+    // Clear previous category errors
+    const existingCategoryError = document.querySelector('.category-validation-error');
+    if (existingCategoryError) {
+        existingCategoryError.remove();
+    }
+    
+    if (categories.length === 0) {
+        e.preventDefault();
+        
+        // Show error message near the categories section
+        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
+        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Por favor selecciona al menos una categoría.';
+        categoriesSection.appendChild(errorDiv);
+        
+        // Scroll to the error
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        return false;
+    }
+    
+    if (categories.length > 5) {
+        e.preventDefault();
+        
+        // Show error message near the categories section
+        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
+        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes seleccionar más de 5 categorías.';
+        categoriesSection.appendChild(errorDiv);
+        
+        // Scroll to the error
+        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        return false;
+    }
 });
 
 // Clear category errors when user changes selection
@@ -712,186 +706,16 @@ document.getElementById('longitude').addEventListener('input', function() {
     clearFieldError('longitude');
 });
 
-// Confirm photo deletion with SweetAlert and immediate removal
-function confirmDeletePhoto(photoId) {
-    Swal.fire({
-        title: '¿Eliminar foto?',
-        text: '¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Enable the hidden input to mark for deletion
-            const deleteInput = document.getElementById(`delete_input_${photoId}`);
-            deleteInput.disabled = false;
-            
-            // Remove the photo from the UI immediately
-            const photoElement = document.getElementById(`photo_${photoId}`);
-            photoElement.style.transition = 'opacity 0.3s ease';
-            photoElement.style.opacity = '0';
-            
-            setTimeout(() => {
-                photoElement.remove();
-            }, 300);
-            
-            // Show success message
-            Swal.fire({
-                title: 'Foto marcada para eliminar',
-                text: 'La foto se eliminará cuando actualices el restaurante.',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        }
-    });
-}
-
-// Confirm cancel action
-function confirmCancel() {
-    // Check if form has any data
-    const form = document.getElementById('restaurantForm');
-    const formData = new FormData(form);
-    let hasChanges = false;
-    
-    // Check for any form changes (basic check)
-    const inputs = form.querySelectorAll('input, textarea, select');
-    for (let input of inputs) {
-        if (input.type === 'file' && input.files.length > 0) {
-            hasChanges = true;
-            break;
-        }
-        if (input.type === 'checkbox' || input.type === 'radio') {
-            if (input.checked !== input.defaultChecked) {
-                hasChanges = true;
-                break;
+// Confirm photo deletion
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'delete_photos[]') {
+        if (e.target.checked) {
+            if (!confirm('¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.')) {
+                e.target.checked = false;
             }
-        } else if (input.value !== input.defaultValue) {
-            hasChanges = true;
-            break;
         }
     }
-    
-    // Check if any photos are marked for deletion
-    const deleteInputs = document.querySelectorAll('input[name="delete_photos[]"]');
-    for (let input of deleteInputs) {
-        if (!input.disabled) {
-            hasChanges = true;
-            break;
-        }
-    }
-    
-    if (hasChanges) {
-        Swal.fire({
-            title: '¿Salir sin guardar?',
-            text: 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, salir',
-            cancelButtonText: 'Continuar editando'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '{{ route("restaurants.show", $restaurant) }}';
-            }
-        });
-    } else {
-        window.location.href = '{{ route("restaurants.show", $restaurant) }}';
-    }
-}
-
-// Confirm update action
-function confirmUpdate() {
-    // First validate the form
-    const categories = document.querySelectorAll('input[name="categories[]"]:checked');
-    
-    // Clear previous category errors
-    const existingCategoryError = document.querySelector('.category-validation-error');
-    if (existingCategoryError) {
-        existingCategoryError.remove();
-    }
-    
-    if (categories.length === 0) {
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Por favor selecciona al menos una categoría.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return false;
-    }
-    
-    if (categories.length > 5) {
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes seleccionar más de 5 categorías.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return false;
-    }
-    
-    // Validate coordinates
-    if (!validateCoordinates()) {
-        return false;
-    }
-    
-    // Validate total photos
-    const fileInputs = document.getElementById('photos').files;
-    const urlInputs = document.querySelectorAll('input[name="photo_urls[]"]');
-    const filledUrls = Array.from(urlInputs).filter(input => input.value.trim() !== '');
-    const totalPhotos = fileInputs.length + filledUrls.length;
-    
-    if (totalPhotos > 8) {
-        const photosSection = document.querySelector('#photos').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger photo-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes agregar más de 8 fotos en total (archivos + URLs).';
-        photosSection.appendChild(errorDiv);
-        
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return false;
-    }
-    
-    // Show confirmation dialog
-    Swal.fire({
-        title: '¿Actualizar restaurante?',
-        text: '¿Estás seguro de que quieres actualizar la información del restaurante?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, actualizar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show loading
-            Swal.fire({
-                title: 'Actualizando restaurante...',
-                text: 'Por favor espera mientras procesamos los cambios.',
-                icon: 'info',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                willOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Submit the form
-            document.getElementById('restaurantForm').submit();
-        }
-    });
-}
+});
 
 // Photo URL management functions
 function addPhotoUrl() {
@@ -959,6 +783,37 @@ function updatePhotoUrlButtons() {
 // Initialize photo URL buttons on page load
 document.addEventListener('DOMContentLoaded', function() {
     updatePhotoUrlButtons();
+    
+    // Add validation for total photos (files + URLs) on form submit with visual feedback
+    document.getElementById('restaurantForm').addEventListener('submit', function(e) {
+        const fileInputs = document.getElementById('photos').files;
+        const urlInputs = document.querySelectorAll('input[name="photo_urls[]"]');
+        const filledUrls = Array.from(urlInputs).filter(input => input.value.trim() !== '');
+        
+        const totalPhotos = fileInputs.length + filledUrls.length;
+        
+        // Clear previous photo errors
+        const existingPhotoError = document.querySelector('.photo-validation-error');
+        if (existingPhotoError) {
+            existingPhotoError.remove();
+        }
+        
+        if (totalPhotos > 8) {
+            e.preventDefault();
+            
+            // Show error message near the photos section
+            const photosSection = document.querySelector('#photos').closest('.mb-3');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger photo-validation-error mt-2';
+            errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes agregar más de 8 fotos en total (archivos + URLs).';
+            photosSection.appendChild(errorDiv);
+            
+            // Scroll to the error
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            return false;
+        }
+    });
 });
 </script>
 @endpush

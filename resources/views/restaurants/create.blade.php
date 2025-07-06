@@ -348,10 +348,10 @@
                                     
                                     <!-- URL Panel -->
                                     <div class="tab-pane fade" id="url-panel" role="tabpanel">
-                                        <label class="form-label" for="photo_url_create_0">URLs de Fotos</label>
+                                        <label class="form-label">URLs de Fotos</label>
                                         <div id="photoUrls">
                                             <div class="input-group mb-2">
-                                                <input type="url" class="form-control" name="photo_urls[]" id="photo_url_create_0" placeholder="https://ejemplo.com/imagen.jpg">
+                                                <input type="url" class="form-control" name="photo_urls[]" placeholder="https://ejemplo.com/imagen.jpg">
                                                 <button type="button" class="btn btn-outline-success" onclick="addPhotoUrl()"><i class="bi bi-plus"></i></button>
                                             </div>
                                         </div>
@@ -370,7 +370,7 @@
                             
                             <!-- Photo Preview -->
                             <div class="col-12">
-                                <div id="photoPreview" class="d-flex flex-wrap gap-2" style="display: none;"></div>
+                                <div id="photoPreview" class="row g-2" style="display: none;"></div>
                             </div>
                         </div>
                         
@@ -378,10 +378,10 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="d-flex gap-3 justify-content-end">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="confirmCancel()">
+                                    <a href="{{ route('restaurants.index') }}" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left me-1"></i>Cancelar
-                                    </button>
-                                    <button type="button" class="btn btn-primary" onclick="confirmSubmit()">
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-check-circle me-1"></i>Crear Restaurante
                                     </button>
                                 </div>
@@ -418,82 +418,44 @@
 
 @push('scripts')
 <script>
-// Photo preview functionality with dynamic removal
-let selectedFiles = [];
-let fileCounter = 0;
-
+// Photo preview functionality
 document.getElementById('photos').addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
-    
-    // Add new files to selectedFiles array
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-            selectedFiles.push({
-                file: file,
-                id: fileCounter++,
-                name: file.name
-            });
-        }
-    });
-    
-    updatePhotoPreview();
-    updateFileInput();
-});
-
-function updatePhotoPreview() {
+    const files = e.target.files;
     const preview = document.getElementById('photoPreview');
+    
+    // Clear previous previews
     preview.innerHTML = '';
     
-    if (selectedFiles.length > 0) {
+    if (files.length > 0) {
         preview.style.display = 'block';
         
-        selectedFiles.forEach((fileObj, index) => {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const photoDiv = document.createElement('div');
-                photoDiv.className = 'position-relative';
-                photoDiv.style.cssText = 'width: 120px; height: 120px; flex-shrink: 0;';
-                photoDiv.setAttribute('data-file-id', fileObj.id);
+        Array.from(files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
                 
-                photoDiv.innerHTML = `
-                    <img src="${e.target.result}" class="rounded" style="width: 100%; height: 100%; object-fit: cover;" alt="Preview ${index + 1}">
-                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" 
-                            onclick="removeSelectedFile(${fileObj.id})" 
-                            style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem;">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom">
-                        <small class="text-truncate d-block">${fileObj.name}</small>
-                    </div>
-                `;
+                reader.onload = function(e) {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-4 col-6';
+                    
+                    col.innerHTML = `
+                        <div class="card">
+                            <img src="${e.target.result}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="Preview ${index + 1}">
+                            <div class="card-body p-2">
+                                <small class="text-muted">${file.name}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    preview.appendChild(col);
+                };
                 
-                preview.appendChild(photoDiv);
-            };
-            
-            reader.readAsDataURL(fileObj.file);
+                reader.readAsDataURL(file);
+            }
         });
     } else {
         preview.style.display = 'none';
     }
-}
-
-function removeSelectedFile(fileId) {
-    selectedFiles = selectedFiles.filter(fileObj => fileObj.id !== fileId);
-    updatePhotoPreview();
-    updateFileInput();
-}
-
-function updateFileInput() {
-    const input = document.getElementById('photos');
-    const dt = new DataTransfer();
-    
-    selectedFiles.forEach(fileObj => {
-        dt.items.add(fileObj.file);
-    });
-    
-    input.files = dt.files;
-}
+});
 
 // Form validation
 // Add category validation to the main form submit handler
@@ -727,138 +689,6 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
         return false;
     }
 });
-
-// SweetAlert confirmations
-function confirmCancel() {
-    // Check if form has any data
-    const form = document.getElementById('restaurantForm');
-    const formData = new FormData(form);
-    let hasData = false;
-    
-    // Check text inputs
-    const textInputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="url"], input[type="tel"], textarea, select');
-    textInputs.forEach(input => {
-        if (input.value.trim() !== '') hasData = true;
-    });
-    
-    // Check checkboxes
-    const checkboxes = form.querySelectorAll('input[type="checkbox"]:checked');
-    if (checkboxes.length > 0) hasData = true;
-    
-    // Check files
-    if (selectedFiles.length > 0) hasData = true;
-    
-    // Check photo URLs
-    const photoUrls = form.querySelectorAll('input[name="photo_urls[]"]');
-    photoUrls.forEach(input => {
-        if (input.value.trim() !== '') hasData = true;
-    });
-    
-    if (hasData) {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'Perderás todos los datos introducidos si sales ahora.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, salir',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '{{ route("restaurants.index") }}';
-            }
-        });
-    } else {
-        window.location.href = '{{ route("restaurants.index") }}';
-    }
-}
-
-function confirmSubmit() {
-    // First validate the form
-    const form = document.getElementById('restaurantForm');
-    
-    // Check categories
-    const categories = document.querySelectorAll('input[name="categories[]"]:checked');
-    if (categories.length === 0) {
-        // Show category error and return
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const existingError = categoriesSection.querySelector('.category-validation-error');
-        if (existingError) existingError.remove();
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Por favor selecciona al menos una categoría.';
-        categoriesSection.appendChild(errorDiv);
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
-    
-    if (categories.length > 5) {
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const existingError = categoriesSection.querySelector('.category-validation-error');
-        if (existingError) existingError.remove();
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes seleccionar más de 5 categorías.';
-        categoriesSection.appendChild(errorDiv);
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
-    
-    // Check coordinates
-    if (!validateCoordinates()) {
-        return;
-    }
-    
-    // Check photo limit
-    const fileInputs = document.getElementById('photos').files.length;
-    const urlInputs = Array.from(document.querySelectorAll('input[name="photo_urls[]"]')).filter(input => input.value.trim() !== '').length;
-    const totalPhotos = fileInputs + urlInputs;
-    
-    if (totalPhotos > 8) {
-        const photosSection = document.querySelector('#photos').closest('.mb-3');
-        const existingError = photosSection.querySelector('.photo-validation-error');
-        if (existingError) existingError.remove();
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger photo-validation-error mt-2';
-        errorDiv.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>Máximo 8 fotos permitidas. Tienes ${totalPhotos} fotos seleccionadas.`;
-        photosSection.appendChild(errorDiv);
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
-    
-    // If validation passes, show confirmation
-    Swal.fire({
-        title: '¿Crear restaurante?',
-        text: 'El restaurante será enviado para revisión antes de ser publicado.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, crear',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Show loading
-            Swal.fire({
-                title: 'Creando restaurante...',
-                text: 'Por favor espera mientras procesamos la información.',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Submit the form
-            form.submit();
-        }
-    });
-}
 
 </script>
 @endpush

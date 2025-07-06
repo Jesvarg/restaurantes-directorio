@@ -131,9 +131,15 @@
                     <div class="card restaurant-card h-100">
                         <!-- Restaurant Image -->
                         <div class="position-relative">
-                            <img src="{{ $restaurant->primary_photo_url }}"
-                             class="card-img-top restaurant-image"
-                             alt="Imagen de {{ $restaurant->name }}">
+                            @if($restaurant->primaryPhoto)
+                                <img src="{{ $restaurant->primaryPhoto->url }}" 
+                                     class="card-img-top restaurant-image" 
+                                     alt="{{ $restaurant->primaryPhoto->alt_text }}">
+                            @else
+                                <div class="card-img-top restaurant-image d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                                </div>
+                            @endif
                             
                             <!-- Price Badge -->
                             <span class="price-badge">
@@ -283,54 +289,21 @@ function toggleFavorite(restaurantId) {
                     icon.className = 'bi bi-heart';
                 }
                 
-                // Mostrar mensaje de éxito con SweetAlert
-                if (data.favorited) {
-                    Swal.fire({
-                        title: '¡Agregado a favoritos!',
-                        text: 'El restaurante se ha agregado a tu lista de favoritos.',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'Eliminado de favoritos',
-                        text: 'El restaurante se ha eliminado de tu lista de favoritos.',
-                        icon: 'info',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
-                }
+                // Mostrar mensaje de éxito (opcional)
+                console.log(data.message);
             } else {
                 throw new Error(data.message || 'Error al actualizar favoritos');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.',
-                icon: 'error',
-                confirmButtonText: 'Entendido'
-            });
+            showNotification('Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.', 'error');
         });
     @else
-        Swal.fire({
-            title: 'Inicia sesión',
-            text: 'Debes iniciar sesión para agregar restaurantes a favoritos.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Iniciar sesión',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = '{{ route("login") }}';
-            }
-        });
+        showNotification('Debes iniciar sesión para agregar favoritos', 'warning');
+        setTimeout(() => {
+            window.location.href = '{{ route("login") }}';
+        }, 2000);
     @endauth
 }
 
@@ -346,6 +319,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
+// Function to show notifications
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.notification-toast');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} notification-toast position-fixed`;
+    notification.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    `;
+    
+    const icon = type === 'error' ? 'exclamation-circle' : 
+                 type === 'warning' ? 'exclamation-triangle' : 
+                 'info-circle';
+    
+    notification.innerHTML = `
+        <i class="bi bi-${icon} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
 </script>
 @endpush

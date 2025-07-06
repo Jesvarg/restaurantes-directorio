@@ -306,6 +306,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/form-utils.js') }}"></script>
 <script>
 // Toggle password visibility
 document.getElementById('togglePassword').addEventListener('click', function() {
@@ -399,39 +400,7 @@ document.getElementById('password_confirmation').addEventListener('input', funct
     }
 });
 
-// Form validation with visual feedback
-function showFieldError(fieldId, message) {
-    const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    // Remove existing error message
-    if (existingError) {
-        existingError.remove();
-    }
-    
-    // Add error styling
-    field.classList.add('is-invalid');
-    
-    // Create and add error message
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'invalid-feedback client-error-message';
-    errorDiv.textContent = message;
-    field.parentNode.appendChild(errorDiv);
-    
-    // Focus the field
-    field.focus();
-}
-
-function clearFieldError(fieldId) {
-    const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    if (existingError) {
-        existingError.remove();
-    }
-    
-    field.classList.remove('is-invalid');
-}
+// Las funciones showFieldError y clearFieldError están disponibles en form-utils.js
 
 // Clear errors on input
 document.getElementById('name').addEventListener('input', function() {

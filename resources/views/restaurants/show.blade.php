@@ -4,71 +4,114 @@
 
 @section('content')
 <div class="container my-4">
-    <!-- Breadcrumb -->
+    <!-- Enhanced Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('restaurants.index') }}">Restaurantes</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ $restaurant->name }}</li>
-        </ol>
+        <div class="d-flex justify-content-between align-items-center">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ route('restaurants.index') }}" class="text-decoration-none">
+                        <i class="bi bi-house-door me-1"></i>Restaurantes
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="bi bi-geo-alt me-1"></i>{{ Str::limit($restaurant->name, 30) }}
+                </li>
+            </ol>
+            
+        </div>
     </nav>
 
     <div class="row">
         <!-- Main Content -->
         <div class="col-lg-8">
             <!-- Restaurant Header -->
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
+                    <!-- Title and Status Row -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h1 class="h2 mb-2">{{ $restaurant->name }}</h1>
-                            <div class="d-flex align-items-center mb-2">
-                                @if($restaurant->averageRating)
-                                    <div class="rating me-2">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            @if($i <= $restaurant->averageRating)
-                                                <i class="bi bi-star-fill"></i>
-                                            @elseif($i - 0.5 <= $restaurant->averageRating)
-                                                <i class="bi bi-star-half"></i>
-                                            @else
-                                                <i class="bi bi-star"></i>
-                                            @endif
-                                        @endfor
-                                    </div>
-                                    <span class="fw-bold me-2">{{ number_format($restaurant->averageRating, 1) }}</span>
-                                    <span class="text-muted">({{ $restaurant->reviewsCount }} {{ $restaurant->reviewsCount === 1 ? 'reseña' : 'reseñas' }})</span>
-                                @else
-                                    <span class="text-muted">Sin reseñas aún</span>
-                                @endif
-                            </div>
-                            <div class="mb-2">
-                                @foreach($restaurant->categories as $category)
-                                    <span class="badge bg-primary me-1">{{ $category->name }}</span>
-                                @endforeach
-                            </div>
-                            <div class="d-flex align-items-center text-muted">
-                                <span class="me-3">{{ $restaurant->priceRangeDisplay }}</span>
-                                @if($restaurant->status === 'approved')
-                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Verificado</span>
-                                @elseif($restaurant->status === 'pending')
-                                    <span class="badge bg-warning"><i class="bi bi-clock me-1"></i>Pendiente</span>
-                                @endif
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap align-items-center mb-2">
+                                <h1 class="h2 me-3 mb-0 text-dark" style="word-break: break-word; max-width: 100%; line-height: 1.2;">{{ $restaurant->name }}</h1>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-dark border px-3 py-2">
+                                        <i class="bi bi-currency-dollar me-1"></i>{{ $restaurant->priceRangeDisplay }}
+                                    </span>
+                                    @if($restaurant->status === 'approved')
+                                        <span class="badge bg-success px-3 py-2">
+                                            <i class="bi bi-check-circle me-1"></i>Verificado
+                                        </span>
+                                    @elseif($restaurant->status === 'pending')
+                                        <span class="badge bg-warning px-3 py-2">
+                                            <i class="bi bi-clock me-1"></i>Pendiente
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            @auth
-                                <button class="btn {{ $isFavorite ? 'btn-danger' : 'btn-outline-secondary' }}" 
-                                        onclick="toggleFavorite({{ $restaurant->id }})" 
-                                        id="favorite-btn">
-                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }} me-1"></i>
-                                    {{ $isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos' }}
+                        
+                        <!-- Action Buttons -->
+                         @auth
+                             <div class="d-flex gap-2">
+                                 <button class="btn {{ $isFavorite ? 'btn-danger' : 'btn-outline-secondary' }} btn-lg" 
+                                         onclick="toggleFavorite({{ $restaurant->id }})" 
+                                         id="favorite-btn"
+                                         title="{{ $isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos' }}">
+                                     <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                 </button>
+                                 @if($canEdit)
+                                     <a href="{{ route('restaurants.edit', $restaurant) }}" class="btn btn-outline-primary btn-lg">
+                                         <i class="bi bi-pencil"></i>
+                                     </a>
+                                 @endif
+                             </div>
+                         @endauth
+                    </div>
+                    
+                    <!-- Rating and Reviews Row -->
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            @if($restaurant->averageRating)
+                                <div class="rating me-3" style="color: #ffc107; font-size: 1.2rem;">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= $restaurant->averageRating)
+                                            <i class="bi bi-star-fill"></i>
+                                        @elseif($i - 0.5 <= $restaurant->averageRating)
+                                            <i class="bi bi-star-half"></i>
+                                        @else
+                                            <i class="bi bi-star"></i>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="fw-bold fs-5 me-2">{{ number_format($restaurant->averageRating, 1) }}</span>
+                                    <span class="text-muted">
+                                        ({{ $restaurant->reviewsCount }} {{ $restaurant->reviewsCount === 1 ? 'reseña' : 'reseñas' }})
+                                    </span>
+                                </div>
+                            @else
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="bi bi-star me-2" style="font-size: 1.2rem;"></i>
+                                    <span>Sin reseñas aún</span>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        @auth
+                            @if(!$restaurant->reviews->where('user_id', Auth::id())->count())
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                                    <i class="bi bi-plus-circle me-1"></i>Escribir reseña
                                 </button>
-                                @if($canEdit)
-                                    <a href="{{ route('restaurants.edit', $restaurant) }}" class="btn btn-outline-primary">
-                                        <i class="bi bi-pencil me-1"></i>Editar
-                                    </a>
-                                @endif
-                            @endauth
-                        </div>
+                            @endif
+                        @endauth
+                    </div>
+                    
+                    <!-- Categories Row -->
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach($restaurant->categories as $category)
+                            <span class="badge bg-primary fs-6 px-3 py-2">
+                                <i class="bi bi-tag me-1"></i>{{ $category->name }}
+                            </span>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -84,7 +127,7 @@
                             <div class="carousel-inner">
                                 @foreach($restaurant->photos as $index => $photo)
                                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                                        <img src="{{ $photo->url }}" 
+                                        <img src="{{ $photo->full_url }}" 
                                              class="d-block w-100" 
                                              style="height: 400px; object-fit: cover;"
                                              alt="{{ $photo->alt_text }}">
@@ -368,42 +411,10 @@
 @endpush
 
 @push('scripts')
+<script src="{{ asset('js/form-utils.js') }}"></script>
 <script>
-// Toggle favorite functionality
-function toggleFavorite(restaurantId) {
-    fetch(`/api/restaurants/${restaurantId}/favorite`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            const btn = document.getElementById('favorite-btn');
-            
-            if (data.favorited) {
-                btn.className = 'btn btn-danger';
-                btn.innerHTML = '<i class="bi bi-heart-fill me-1"></i>Quitar de favoritos';
-                toastr.success('Restaurante agregado a favoritos');
-            } else {
-                btn.className = 'btn btn-outline-secondary';
-                btn.innerHTML = '<i class="bi bi-heart me-1"></i>Agregar a favoritos';
-                toastr.info('Restaurante eliminado de favoritos');
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        toastr.error('Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.');
-    });
-}
+    // Configurar variable global para autenticación
+    window.isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
 </script>
+<script src="{{ asset('js/favorites.js') }}"></script>
 @endpush

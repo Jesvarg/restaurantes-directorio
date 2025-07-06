@@ -132,7 +132,7 @@
                         <!-- Restaurant Image -->
                         <div class="position-relative">
                             @if($restaurant->primaryPhoto)
-                                <img src="{{ $restaurant->primaryPhoto->url }}" 
+                                <img src="{{ $restaurant->primary_photo_url }}" 
                                      class="card-img-top restaurant-image" 
                                      alt="{{ $restaurant->primaryPhoto->alt_text }}">
                             @else
@@ -228,7 +228,9 @@
 
         <!-- Pagination -->
         <div class="d-flex justify-content-center mt-5">
-            {{ $restaurants->links() }}
+            <nav aria-label="Navegación de páginas">
+                {{ $restaurants->links('pagination::bootstrap-4') }}
+            </nav>
         </div>
     @else
         <!-- No Results -->
@@ -255,57 +257,17 @@
         </div>
     @endif
 </div>
+
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/form-utils.js') }}"></script>
 <script>
-// Toggle favorite functionality
-function toggleFavorite(restaurantId) {
-    @auth
-        fetch(`/api/restaurants/${restaurantId}/favorite`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                const btn = document.getElementById(`favorite-btn-${restaurantId}`);
-                const icon = btn.querySelector('i');
-                
-                if (data.favorited) {
-                    btn.className = 'btn btn-outline-danger';
-                    icon.className = 'bi bi-heart-fill';
-                } else {
-                    btn.className = 'btn btn-outline-secondary';
-                    icon.className = 'bi bi-heart';
-                }
-                
-                // Mostrar mensaje de éxito (opcional)
-                console.log(data.message);
-            } else {
-                throw new Error(data.message || 'Error al actualizar favoritos');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Ocurrió un error al actualizar favoritos. Por favor, intenta de nuevo.', 'error');
-        });
-    @else
-        showNotification('Debes iniciar sesión para agregar favoritos', 'warning');
-        setTimeout(() => {
-            window.location.href = '{{ route("login") }}';
-        }, 2000);
-    @endauth
-}
+    // Configurar variable global para autenticación
+    window.isAuthenticated = {{ auth()->check() ? 'true' : 'false' }};
+</script>
+<script src="{{ asset('js/favorites.js') }}"></script>
+<script>
 
 // Auto-submit search form on Enter
 document.addEventListener('DOMContentLoaded', function() {
@@ -319,43 +281,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Function to show notifications
-function showNotification(message, type = 'info') {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.notification-toast');
-    existingNotifications.forEach(notification => notification.remove());
-    
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'error' ? 'danger' : type} notification-toast position-fixed`;
-    notification.style.cssText = `
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-    `;
-    
-    const icon = type === 'error' ? 'exclamation-circle' : 
-                 type === 'warning' ? 'exclamation-triangle' : 
-                 'info-circle';
-    
-    notification.innerHTML = `
-        <i class="bi bi-${icon} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
-    `;
-    
-    // Add to page
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
-}
+// La función showFavoriteSuccess está disponible como showSuccessMessage en form-utils.js
 </script>
 @endpush

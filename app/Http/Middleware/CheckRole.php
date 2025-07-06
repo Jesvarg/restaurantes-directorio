@@ -13,10 +13,10 @@ class CheckRole
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @param  string  $role
+     * @param  string  $roles - Roles separados por comas (ej: 'admin,owner')
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
         if (!Auth::check()) {
             return redirect()->route('login');
@@ -30,8 +30,8 @@ class CheckRole
             return redirect()->route('login')->with('error', 'Tu cuenta ha sido suspendida.');
         }
 
-        // Verificar el rol requerido
-        if ($user->role !== $role) {
+        // Verificar si el usuario tiene alguno de los roles requeridos
+        if (!in_array($user->role, $roles)) {
             abort(403, 'No tienes permisos para acceder a esta página.');
         }
 

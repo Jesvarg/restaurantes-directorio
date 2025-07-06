@@ -3,16 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{-- Agregar en el head --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ config('app.name', 'Directorio Restaurantes') }} u- @yield('title', 'Inicio')</title>
+    <title>{{ config('app.name', 'Directorio Restaurantes') }} - @yield('title', 'Inicio')</title>
 
     <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -23,6 +20,9 @@
     
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Custom Styles -->
     <style>
@@ -166,63 +166,188 @@
         main {
             flex: 1;
         }
-    </style>
 
-    @stack('styles')
+        /* Scroll to top button */
+        .btn-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .btn-floating:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Pagination improvements */
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .pagination .page-link {
+            border-radius: 6px;
+            margin: 0 2px;
+            border: 1px solid #dee2e6;
+        }
+
+        .pagination .page-link:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Admin specific styles */
+        .admin-header {
+            background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .admin-card {
+            border-left: 4px solid var(--admin-primary);
+            transition: all 0.3s ease;
+        }
+
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
+
 <body class="d-flex flex-column min-vh-100">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ route('restaurants.index') }}">
-                <i class="bi bi-geo-alt-fill me-2 fs-4"></i>
+            <a class="navbar-brand" href="{{ route('restaurants.index') }}">
+                <i class="bi bi-shop me-2"></i>
                 {{ config('app.name', 'Directorio Restaurantes') }}
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <!-- Navegación principal removida según solicitud del usuario -->
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('restaurants.index') ? 'active' : '' }}" href="{{ route('restaurants.index') }}">
+                            <i class="bi bi-house me-1"></i>
+                            Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('restaurants.index') ? 'active' : '' }}" href="{{ route('restaurants.index') }}">
+                            <i class="bi bi-search me-1"></i>
+                            Buscar Restaurantes
+                        </a>
+                    </li>
                 </ul>
 
                 <ul class="navbar-nav">
                     @guest
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar Sesión
+                            <a class="nav-link" href="{{ route('login') }}">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>
+                                Iniciar Sesión
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('register') ? 'active' : '' }}" href="{{ route('register') }}">
-                                <i class="bi bi-person-plus me-1"></i>Registrarse
+                            <a class="nav-link" href="{{ route('register') }}">
+                                <i class="bi bi-person-plus me-1"></i>
+                                Registrarse
                             </a>
                         </li>
                     @else
+                        <!-- Dropdown de Notificaciones -->
+                        @if(count($notifications) > 0)
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell fs-5"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ array_sum(array_column($notifications, 'count')) }}
+                                    <span class="visually-hidden">notificaciones pendientes</span>
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="min-width: 300px;">
+                                <li><h6 class="dropdown-header">Notificaciones</h6></li>
+                                @foreach($notifications as $notification)
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-start py-2" href="{{ $notification['url'] }}">
+                                        <i class="{{ $notification['icon'] }} text-{{ $notification['color'] }} me-2 mt-1"></i>
+                                        <div class="flex-grow-1">
+                                            <div class="fw-semibold">{{ $notification['title'] }}</div>
+                                            <small class="text-muted">{{ $notification['message'] }}</small>
+                                        </div>
+                                        <span class="badge bg-{{ $notification['color'] }} ms-2">{{ $notification['count'] }}</span>
+                                    </a>
+                                </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                        @endif
+
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-1"></i>
                                 {{ Auth::user()->name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="{{ route('dashboard.favorites') }}">
-                                    <i class="bi bi-heart me-2"></i>Mis Favoritos
-                                </a></li>
-                                @if(Auth::user()->role === 'owner' || Auth::user()->role === 'admin')
-                                <li><a class="dropdown-item" href="{{ route('dashboard.restaurants') }}">
-                                    <i class="bi bi-shop me-2"></i>Mis Restaurantes
-                                </a></li>
-                                @endif
                                 @if(Auth::user()->role === 'admin')
-                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                    <i class="bi bi-shield-check me-2"></i>Panel de Admin
-                                </a></li>
+                                    <span class="badge bg-primary ms-1">Admin</span>
+                                @elseif(Auth::user()->role === 'owner')
+                                    <span class="badge bg-success ms-1">Propietario</span>
                                 @endif
-                                <li><a class="dropdown-item" href="{{ route('dashboard.reviews') }}">
-                                    <i class="bi bi-chat-left-text me-2"></i>Mis Reseñas
-                                </a></li>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @if(Auth::user()->role === 'admin')
+                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                        <i class="bi bi-speedometer2 me-2"></i>Panel Admin
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                @endif
+                                
+                                @if(Auth::user()->role === 'owner')
+                                    <li><a class="dropdown-item" href="{{ route('dashboard.restaurants') }}">
+                        <i class="bi bi-shop me-2"></i>Mis Restaurantes
+                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ route('restaurants.create') }}">
+                                        <i class="bi bi-plus-circle me-2"></i>Agregar Restaurante
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                @endif
+                                
+                                <li><a class="dropdown-item" href="{{ route('dashboard.favorites') }}">
+                    <i class="bi bi-heart me-2"></i>Mis Favoritos
+                </a></li>
+                <li><a class="dropdown-item" href="{{ route('dashboard.reviews') }}">
+                    <i class="bi bi-star me-2"></i>Mis Reseñas
+                </a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile.show') }}">
+                     <i class="bi bi-gear me-2"></i>Configuración
+                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
@@ -240,42 +365,6 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    @if(session('success'))
-        <div class="container mt-3">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="container mt-3">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="container mt-3">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                <strong>Por favor corrige los siguientes errores:</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-    @endif
-
     <!-- Main Content -->
     <main>
         @yield('content')
@@ -286,1744 +375,67 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5 class="text-white mb-3">
-                        <i class="bi bi-geo-alt-fill me-2"></i>
-                        {{ config('app.name', 'Directorio de Restaurantes') }}
-                    </h5>
-                    <p class="text-light mb-0">
-                        Descubre los mejores restaurantes de tu ciudad   y disfruta experiencias gastronómicas únicas.
-                    </p>
-                </div>
-                <div class="col-md-3">
-                    <h6 class="text-white mb-3">Contacto</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-telephone-fill me-2"></i>
-                            <span class="text-light">+1 (555) 123-4567</span>
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-envelope-fill me-2"></i>
-                            <a href="mailto:info@restaurantes.com" class="text-light text-decoration-none">info@restaurantes.com</a>
-                        </li>
-                        <li class="mb-2">
-                            <i class="bi bi-geo-alt-fill me-2"></i>
-                            <span class="text-light">123 Calle Principal, Ciudad</span>
-                        </li>
-                        <li>
-                            <i class="bi bi-clock-fill me-2"></i>
-                            <span class="text-light">Lun-Dom: 24/7</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h6 class="text-white mb-3">Síguenos</h6>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="text-light fs-4"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="text-light fs-4"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="text-light fs-4"><i class="bi bi-instagram"></i></a>
-                    </div>
-                </div>
-            </div>
-            <hr class="my-4 border-light">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="text-light mb-0">&copy; {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados.</p>
+                    <h5>{{ config('app.name', 'Directorio Restaurantes') }}</h5>
+                    <p class="mb-0">Descubre los mejores restaurantes de tu ciudad.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <small class="text-light">Hecho con <i class="bi bi-heart-fill text-danger"></i> para los amantes de la buena comida</small>
+                    <p class="mb-0">&copy; {{ date('Y') }} Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>
     </footer>
 
+    <!-- Scroll to Top Button -->
+    <button type="button" class="btn btn-primary btn-floating" id="scrollToTopBtn" style="display: none;">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    
+
+    <!-- Custom Scripts -->
+    <script>
+        // Scroll to top functionality
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollToTopBtn.style.display = 'flex';
+            } else {
+                scrollToTopBtn.style.display = 'none';
+            }
+        });
+        
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Show success/error messages
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '{{ session('error') }}',
+                timer: 4000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        @endif
+
+        @if($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Errores de validación',
+                html: 'Por favor corrige los siguientes errores:<br><ol style="text-align: left; margin: 10px 0;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ol>',
+                confirmButtonText: 'Entendido'
+            });
+        @endif
+    </script>
+
     @stack('scripts')
 </body>
 </html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-
-
-
-
-
-
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;
-    }
-
-    /* Admin specific styles */
-    .admin-header {
-        background: linear-gradient(135deg, var(--admin-primary), var(--admin-dark));
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-
-    .admin-card {
-        border-left: 4px solid var(--admin-primary);
-        transition: all 0.3s ease;
-    }
-
-    .admin-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .status-badge {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-        border-radius: 50px;
-    }
-
-    .action-btn {
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.05);
-    }
-</style>
-</body>
-</html>
-
-<style>
-    :root {
-        --primary-color: #e74c3c;
-        --secondary-color: #34495e;
-        --accent-color: #f39c12;
-        --light-bg: #f8f9fa;
-        --dark-text: #2c3e50;
-        --admin-primary: #3498db;
-        --admin-success: #27ae60;
-        --admin-warning: #f39c12;
-        --admin-danger: #e74c3c;
-        --admin-dark: #2c3e50;

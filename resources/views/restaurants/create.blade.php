@@ -417,7 +417,188 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/restaurant-form-validation.js') }}"></script>
 <script>
+// Validaciones en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación del nombre del restaurante
+    const nameField = document.getElementById('name');
+    const nameCounter = document.createElement('div');
+    nameCounter.className = 'form-text text-muted';
+    nameField.parentNode.appendChild(nameCounter);
+    
+    nameField.addEventListener('input', function() {
+        const length = this.value.length;
+        const minLength = 3;
+        const maxLength = 50;
+        
+        nameCounter.textContent = `${length}/${maxLength} caracteres`;
+        
+        if (length === 0) {
+            this.classList.remove('is-valid', 'is-invalid');
+            nameCounter.className = 'form-text text-muted';
+        } else if (length < minLength) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            nameCounter.className = 'form-text text-danger';
+            nameCounter.textContent = `Mínimo ${minLength} caracteres (${length}/${maxLength})`;
+        } else if (length > maxLength) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            nameCounter.className = 'form-text text-danger';
+            nameCounter.textContent = `Máximo ${maxLength} caracteres (${length}/${maxLength})`;
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            nameCounter.className = 'form-text text-success';
+            nameCounter.textContent = `${length}/${maxLength} caracteres ✓`;
+        }
+    });
+    
+    // Validación de categorías
+    const categoryCheckboxes = document.querySelectorAll('input[name="categories[]"]');
+    const categoryCounter = document.createElement('div');
+    categoryCounter.className = 'form-text text-muted';
+    categoryCounter.textContent = '0/5 categorías seleccionadas';
+    document.querySelector('input[name="categories[]"]').closest('.mb-3').appendChild(categoryCounter);
+    
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('input[name="categories[]"]:checked').length;
+            
+            categoryCounter.textContent = `${checkedCount}/5 categorías seleccionadas`;
+            
+            if (checkedCount === 0) {
+                categoryCounter.className = 'form-text text-danger';
+                categoryCounter.textContent = 'Selecciona al menos 1 categoría';
+            } else if (checkedCount > 5) {
+                categoryCounter.className = 'form-text text-danger';
+                categoryCounter.textContent = `Máximo 5 categorías (${checkedCount}/5)`;
+            } else {
+                categoryCounter.className = 'form-text text-success';
+                categoryCounter.textContent = `${checkedCount}/5 categorías seleccionadas ✓`;
+            }
+        });
+    });
+    
+    // Validación de dirección
+    const addressField = document.getElementById('address');
+    const addressCounter = document.createElement('div');
+    addressCounter.className = 'form-text text-muted';
+    addressField.parentNode.appendChild(addressCounter);
+    
+    addressField.addEventListener('input', function() {
+        const length = this.value.length;
+        const minLength = 10;
+        const maxLength = 255;
+        
+        if (length === 0) {
+            this.classList.remove('is-valid', 'is-invalid');
+            addressCounter.className = 'form-text text-danger';
+            addressCounter.textContent = 'La dirección es obligatoria';
+        } else if (length < minLength) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            addressCounter.className = 'form-text text-danger';
+            addressCounter.textContent = `Mínimo ${minLength} caracteres (${length}/${maxLength})`;
+        } else if (length > maxLength) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            addressCounter.className = 'form-text text-danger';
+            addressCounter.textContent = `Máximo ${maxLength} caracteres (${length}/${maxLength})`;
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            addressCounter.className = 'form-text text-success';
+            addressCounter.textContent = `${length}/${maxLength} caracteres ✓`;
+        }
+    });
+    
+    // Validación de teléfono
+    const phoneField = document.getElementById('phone');
+    const phoneCounter = document.createElement('div');
+    phoneCounter.className = 'form-text text-muted';
+    phoneCounter.textContent = 'Formato: +1 234 567 8900 (opcional)';
+    phoneField.parentNode.appendChild(phoneCounter);
+    
+    phoneField.addEventListener('input', function() {
+        const value = this.value;
+        const phoneRegex = /^[\+]?[1-9][\d]{0,14}$/;
+        
+        if (value === '') {
+            this.classList.remove('is-valid', 'is-invalid');
+            phoneCounter.className = 'form-text text-muted';
+            phoneCounter.textContent = 'Formato: +1 234 567 8900 (opcional)';
+        } else if (phoneRegex.test(value.replace(/[\s\-\(\)]/g, ''))) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            phoneCounter.className = 'form-text text-success';
+            phoneCounter.textContent = 'Formato válido ✓';
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            phoneCounter.className = 'form-text text-danger';
+            phoneCounter.textContent = 'Formato inválido. Ej: +1 234 567 8900';
+        }
+    });
+    
+    // Validación de email
+    const emailField = document.getElementById('email');
+    const emailCounter = document.createElement('div');
+    emailCounter.className = 'form-text text-muted';
+    emailCounter.textContent = 'Formato: contacto@restaurante.com (opcional)';
+    emailField.parentNode.appendChild(emailCounter);
+    
+    emailField.addEventListener('input', function() {
+        const value = this.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (value === '') {
+            this.classList.remove('is-valid', 'is-invalid');
+            emailCounter.className = 'form-text text-muted';
+            emailCounter.textContent = 'Formato: contacto@restaurante.com (opcional)';
+        } else if (emailRegex.test(value)) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            emailCounter.className = 'form-text text-success';
+            emailCounter.textContent = 'Email válido ✓';
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            emailCounter.className = 'form-text text-danger';
+            emailCounter.textContent = 'Formato inválido. Ej: contacto@restaurante.com';
+        }
+    });
+    
+    // Validación de fotos
+    const photosField = document.getElementById('photos');
+    const photosCounter = document.createElement('div');
+    photosCounter.className = 'form-text text-muted';
+    photosCounter.textContent = '0/8 fotos seleccionadas (opcional)';
+    photosField.parentNode.appendChild(photosCounter);
+    
+    photosField.addEventListener('change', function() {
+        const fileCount = this.files.length;
+        const maxFiles = 8;
+        
+        if (fileCount === 0) {
+            this.classList.remove('is-valid', 'is-invalid');
+            photosCounter.className = 'form-text text-muted';
+            photosCounter.textContent = '0/8 fotos seleccionadas (opcional)';
+        } else if (fileCount > maxFiles) {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            photosCounter.className = 'form-text text-danger';
+            photosCounter.textContent = `Máximo ${maxFiles} fotos (${fileCount}/${maxFiles})`;
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            photosCounter.className = 'form-text text-success';
+            photosCounter.textContent = `${fileCount}/${maxFiles} fotos seleccionadas ✓`;
+        }
+    });
+});
+
 // Photo preview functionality
 document.getElementById('photos').addEventListener('change', function(e) {
     const files = e.target.files;
@@ -472,15 +653,16 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
     if (categories.length === 0) {
         e.preventDefault();
         
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Por favor selecciona al menos una categoría.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'error',
+            title: 'Categorías requeridas',
+            text: 'Por favor selecciona al menos una categoría.',
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            // Scroll to categories section
+            document.querySelector('input[name="categories[]"]').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         
         return false;
     }
@@ -488,15 +670,16 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
     if (categories.length > 5) {
         e.preventDefault();
         
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes seleccionar más de 5 categorías.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'warning',
+            title: 'Demasiadas categorías',
+            text: 'No puedes seleccionar más de 5 categorías.',
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            // Scroll to categories section
+            document.querySelector('input[name="categories[]"]').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         
         return false;
     }
@@ -547,33 +730,34 @@ document.getElementById('phone').addEventListener('input', function(e) {
     e.target.value = value;
 });
 
-// Form validation with visual feedback
+// Form validation with SweetAlert feedback
 function showFieldError(fieldId, message) {
     const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    // Remove existing error message
-    if (existingError) {
-        existingError.remove();
-    }
     
     // Add error styling
     field.classList.add('is-invalid');
     
-    // Create and add error message
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'invalid-feedback client-error-message';
-    errorDiv.textContent = message;
-    field.parentNode.appendChild(errorDiv);
+    // Show SweetAlert error
+    Swal.fire({
+        icon: 'error',
+        title: 'Error de validación',
+        text: message,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    }).then(() => {
+        // Focus the field after closing the alert
+        field.focus();
+    });
 }
 
 function clearFieldError(fieldId) {
     const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    if (existingError) {
-        existingError.remove();
-    }
     
     field.classList.remove('is-invalid');
 }
@@ -613,16 +797,16 @@ const maxPhotos = 8;
 
 function addPhotoUrl() {
     if (photoUrlCount >= maxPhotos) {
-        // Show error message in a more user-friendly way
-        const container = document.getElementById('photoUrls');
-        const existingError = container.querySelector('.photo-limit-error');
-        if (!existingError) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-warning photo-limit-error mt-2';
-            errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Máximo 8 fotos permitidas.';
-            container.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 3000);
-        }
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'warning',
+            title: 'Límite alcanzado',
+            text: 'Máximo 8 fotos permitidas.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
         return;
     }
     
@@ -676,15 +860,16 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
     if (totalPhotos > maxPhotos) {
         e.preventDefault();
         
-        // Show error message near the photos section
-        const photosSection = document.querySelector('#photos').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger photo-validation-error mt-2';
-        errorDiv.innerHTML = `<i class="bi bi-exclamation-circle me-2"></i>Máximo ${maxPhotos} fotos permitidas. Tienes ${totalPhotos} fotos seleccionadas.`;
-        photosSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'error',
+            title: 'Demasiadas fotos',
+            text: `Máximo ${maxPhotos} fotos permitidas. Tienes ${totalPhotos} fotos seleccionadas.`,
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            // Scroll to photos section
+            document.querySelector('#photos').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         
         return false;
     }

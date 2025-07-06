@@ -70,7 +70,7 @@
 
                 <!-- Paginación -->
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $restaurants->links() }}
+                    {{ $restaurants->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 <div class="text-center py-5">

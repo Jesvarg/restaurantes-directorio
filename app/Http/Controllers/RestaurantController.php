@@ -68,7 +68,7 @@ class RestaurantController extends Controller
                 $query->orderBy('name');
         }
 
-        $restaurants = $query->paginate(12)->withQueryString();
+        $restaurants = $query->paginate(30)->withQueryString();
         $categories = Category::popular()->orderBy('name')->get();
 
         return view('restaurants.index', compact('restaurants', 'categories'));
@@ -99,54 +99,63 @@ class RestaurantController extends Controller
      */
     public function store(StoreRestaurantRequest $request)
     {
-        // Solo admin y owner pueden crear restaurantes
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'owner'])) {
-            abort(403, 'No tienes permisos para crear restaurantes.');
-        }
-        
-        // Los datos ya están validados por StoreRestaurantRequest
-        $validated = $request->validated();
-
         try {
-            // Process opening hours from time picker format
-            $openingHours = $this->processOpeningHours($validated);
+            \Log::info('Store method called', [
+                'has_files' => $request->hasFile('photos'),
+                'files_count' => $request->hasFile('photos') ? count($request->file('photos')) : 0,
+                'photo_urls_count' => $request->filled('photo_urls') ? count($request->photo_urls) : 0,
+                'all_files' => $request->allFiles()
+            ]);
             
-            // Crear restaurante
+            DB::beginTransaction();
+
+            // Crear el restaurante
             $restaurant = Restaurant::create([
-                'name' => $validated['name'],
-                'description' => $validated['description'],
-                'address' => $validated['address'],
-                'phone' => $validated['phone'],
-                'email' => $validated['email'],
-                'website' => $validated['website'],
-                'opening_hours' => $openingHours,
-                'latitude' => $validated['latitude'] ?? null,
-                'longitude' => $validated['longitude'] ?? null,
-                'price_range' => $validated['price_range'],
+                'name' => $request->name,
+                'description' => $request->description,
+                'address' => $request->address,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'website' => $request->website,
+                'price_range' => $request->price_range,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'user_id' => Auth::id(),
                 'status' => 'pending', // Requiere aprobación
             ]);
+            \Log::info('Restaurant created', ['restaurant_id' => $restaurant->id]);
 
             // Asociar categorías
-            $restaurant->categories()->attach($validated['categories']);
+            $restaurant->categories()->attach($request->categories);
+            \Log::info('Categories attached');
 
-            // Procesar fotos subidas si existen
+            // Manejar fotos subidas
             if ($request->hasFile('photos')) {
+                \Log::info('Processing uploaded photos');
                 $this->handlePhotoUploads($restaurant, $request->file('photos'));
             }
-            
-            // Procesar URLs de fotos si existen
+
+            // Manejar URLs de fotos
             if ($request->filled('photo_urls')) {
-                $this->handlePhotoUrls($restaurant, $request->input('photo_urls'));
+                \Log::info('Processing photo URLs');
+                $this->handlePhotoUrls($restaurant, $request->photo_urls);
             }
 
+            DB::commit();
+            \Log::info('Transaction committed successfully');
+
             return redirect()->route('restaurants.show', $restaurant)
-                           ->with('success', 'Restaurante creado exitosamente. Está pendiente de aprobación.');
-                           
-        } catch (\Exception $e) {
-            return back()->withErrors([
-                'error' => 'Ocurrió un error al crear el restaurante. Inténtalo de nuevo.'
-            ])->withInput();
+                ->with('success', 'Restaurante creado exitosamente. Está pendiente de aprobación.');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            \Log::error('Error creating restaurant: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al crear el restaurante. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -354,7 +363,7 @@ class RestaurantController extends Controller
     public function myRestaurants()
     {
         $restaurants = Restaurant::where('user_id', Auth::id())
-                                ->with(['categories', 'photos', 'reviews'])
+                                ->with(['categories', 'photos', 'reviews', 'rejectionReasons'])
                                 ->latest()
                                 ->paginate(10);
         
@@ -421,14 +430,27 @@ class RestaurantController extends Controller
      */
     private function handlePhotoUploads(Restaurant $restaurant, array $photos)
     {
+        \Log::info('handlePhotoUploads called', [
+            'photos_count' => count($photos),
+            'restaurant_id' => $restaurant->id
+        ]);
+        
         foreach ($photos as $index => $photo) {
             if ($photo && $photo->isValid()) {
                 try {
+                    \Log::info('Processing photo', [
+                        'index' => $index,
+                        'original_name' => $photo->getClientOriginalName(),
+                        'mime_type' => $photo->getMimeType(),
+                        'size' => $photo->getSize()
+                    ]);
+                    
                     // Validar que sea una imagen
                     $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
                     $mimeType = $photo->getMimeType();
                     
                     if (!in_array($mimeType, $allowedMimes)) {
+                        \Log::warning('Invalid mime type', ['mime' => $mimeType]);
                         continue; // Saltar archivos que no sean imágenes
                     }
                     
@@ -446,20 +468,27 @@ class RestaurantController extends Controller
                     }
                     
                     $filename = time() . '_' . $index . '.' . $extension;
+                    \Log::info('Generated filename', ['filename' => $filename]);
                     
                     // Guardar archivo
                     $path = $photo->storeAs('restaurants', $filename, 'public');
+                    \Log::info('File stored', ['path' => $path]);
                     
                     // Crear registro en base de datos
-                    $restaurant->photos()->create([
+                    $photoRecord = $restaurant->photos()->create([
                         'url' => $path,
                         'alt_text' => "Foto de {$restaurant->name}",
                         'is_primary' => $index === 0 && $restaurant->photos()->count() === 0,
                         'order' => $restaurant->photos()->count() + 1,
                     ]);
+                    \Log::info('Photo record created', ['photo_id' => $photoRecord->id]);
+                    
                 } catch (\Exception $e) {
                     // Log error but continue with other photos
-                    \Log::error('Error uploading photo: ' . $e->getMessage());
+                    \Log::error('Error uploading photo: ' . $e->getMessage(), [
+                        'index' => $index,
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     continue;
                 }
             }

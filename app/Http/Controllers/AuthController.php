@@ -36,8 +36,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
             
-            return redirect()->intended(route('restaurants.index'))
-                           ->with('success', '¡Bienvenido de vuelta!');
+            return redirect()->intended(route('restaurants.index'));
         }
 
         // Si falla la autenticación
@@ -83,8 +82,7 @@ class AuthController extends Controller
             // Autenticar automáticamente
             Auth::login($user);
 
-            return redirect()->route('restaurants.index')
-                           ->with('success', '¡Cuenta creada exitosamente! Bienvenido.');
+            return redirect()->route('restaurants.index');
                            
         } catch (\Exception $e) {
             return back()->withErrors([
@@ -103,8 +101,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect()->route('restaurants.index')
-                       ->with('success', 'Sesión cerrada correctamente.');
+        return redirect()->route('restaurants.index');
     }
 
     // Métodos para API (si se necesitan en el futuro)

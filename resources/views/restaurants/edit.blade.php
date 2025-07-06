@@ -339,7 +339,7 @@
                                     @foreach($restaurant->photos as $photo)
                                         <div class="col-md-3 col-sm-4 col-6">
                                             <div class="card position-relative">
-                                                <img src="{{ $photo->url }}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="{{ $photo->alt_text }}">
+                                                <img src="{{ $photo->full_url }}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="{{ $photo->alt_text }}">
                                                 @if($photo->is_primary)
                                                     <span class="position-absolute top-0 start-0 badge bg-primary m-1">
                                                         <i class="bi bi-star-fill"></i> Principal
@@ -517,7 +517,9 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/restaurant-form-validation.js') }}"></script>
 <script>
+
 // Toggle hours visibility
 function toggleHours(day) {
     const checkbox = document.getElementById('is_open_' + day);
@@ -586,15 +588,16 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
     if (categories.length === 0) {
         e.preventDefault();
         
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>Por favor selecciona al menos una categoría.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'error',
+            title: 'Categorías requeridas',
+            text: 'Por favor selecciona al menos una categoría.',
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            // Scroll to categories section
+            document.querySelector('input[name="categories[]"]').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         
         return false;
     }
@@ -602,15 +605,16 @@ document.getElementById('restaurantForm').addEventListener('submit', function(e)
     if (categories.length > 5) {
         e.preventDefault();
         
-        // Show error message near the categories section
-        const categoriesSection = document.querySelector('input[name="categories[]"]').closest('.mb-3');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger category-validation-error mt-2';
-        errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes seleccionar más de 5 categorías.';
-        categoriesSection.appendChild(errorDiv);
-        
-        // Scroll to the error
-        errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Show error message with SweetAlert
+        Swal.fire({
+            icon: 'warning',
+            title: 'Demasiadas categorías',
+            text: 'No puedes seleccionar más de 5 categorías.',
+            confirmButtonText: 'Entendido'
+        }).then(() => {
+            // Scroll to categories section
+            document.querySelector('input[name="categories[]"]').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
         
         return false;
     }
@@ -646,33 +650,34 @@ document.getElementById('phone').addEventListener('input', function(e) {
     e.target.value = value;
 });
 
-// Form validation with visual feedback
+// Form validation with SweetAlert feedback
 function showFieldError(fieldId, message) {
     const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    // Remove existing error message
-    if (existingError) {
-        existingError.remove();
-    }
     
     // Add error styling
     field.classList.add('is-invalid');
     
-    // Create and add error message
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'invalid-feedback client-error-message';
-    errorDiv.textContent = message;
-    field.parentNode.appendChild(errorDiv);
+    // Show SweetAlert error
+    Swal.fire({
+        icon: 'error',
+        title: 'Error de validación',
+        text: message,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#dc3545',
+        showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        },
+        hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+        }
+    }).then(() => {
+        // Focus the field after closing the alert
+        field.focus();
+    });
 }
 
 function clearFieldError(fieldId) {
     const field = document.getElementById(fieldId);
-    const existingError = field.parentNode.querySelector('.client-error-message');
-    
-    if (existingError) {
-        existingError.remove();
-    }
     
     field.classList.remove('is-invalid');
 }
@@ -706,16 +711,35 @@ document.getElementById('longitude').addEventListener('input', function() {
     clearFieldError('longitude');
 });
 
-// Confirm photo deletion
+// Confirm photo deletion with SweetAlert
 document.addEventListener('change', function(e) {
     if (e.target.name === 'delete_photos[]') {
         if (e.target.checked) {
-            if (!confirm('¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.')) {
-                e.target.checked = false;
-            }
+            e.target.checked = false; // Uncheck first, will be checked if confirmed
+            
+            Swal.fire({
+                title: '¿Eliminar foto?',
+                text: '¿Estás seguro de que quieres eliminar esta foto? Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    e.target.checked = true; // Check the checkbox if confirmed
+                }
+            });
         }
     }
-});
+});}]}}}
 
 // Photo URL management functions
 function addPhotoUrl() {
@@ -801,15 +825,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (totalPhotos > 8) {
             e.preventDefault();
             
-            // Show error message near the photos section
-            const photosSection = document.querySelector('#photos').closest('.mb-3');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger photo-validation-error mt-2';
-            errorDiv.innerHTML = '<i class="bi bi-exclamation-circle me-2"></i>No puedes agregar más de 8 fotos en total (archivos + URLs).';
-            photosSection.appendChild(errorDiv);
-            
-            // Scroll to the error
-            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Show error message with SweetAlert
+            Swal.fire({
+                icon: 'error',
+                title: 'Demasiadas fotos',
+                text: 'No puedes agregar más de 8 fotos en total (archivos + URLs).',
+                confirmButtonText: 'Entendido'
+            }).then(() => {
+                // Scroll to photos section
+                document.querySelector('#photos').closest('.mb-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
             
             return false;
         }

@@ -17,6 +17,70 @@
                     </a>
                 </div>
             </div>
+            
+            <!-- Notificaciones de rechazo -->
+            @foreach($restaurants->where('status', 'rejected') as $rejectedRestaurant)
+                @php
+                    $latestRejection = $rejectedRestaurant->getLatestRejectionReason();
+                @endphp
+                @if($latestRejection)
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill me-3 mt-1"></i>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-2">
+                                <strong>Restaurante "{{ $rejectedRestaurant->name }}" rechazado</strong>
+                            </h6>
+                            <p class="mb-2">Su restaurante ha sido rechazado por las siguientes razones:</p>
+                            <ul class="mb-2">
+                                @foreach($latestRejection->getInvalidFields() as $field)
+                                    <li>
+                                        @switch($field)
+                                            @case('name_invalid')
+                                                El nombre del restaurante es inválido o inapropiado
+                                                @break
+                                            @case('description_invalid')
+                                                La descripción necesita ser mejorada o es inadecuada
+                                                @break
+                                            @case('address_invalid')
+                                                La dirección está incorrecta o incompleta
+                                                @break
+                                            @case('contact_invalid')
+                                                La información de contacto (teléfono/email) es inválida
+                                                @break
+                                            @case('photos_missing')
+                                                Faltan fotos o las existentes son inadecuadas
+                                                @break
+                                            @case('categories_invalid')
+                                                Las categorías seleccionadas son incorrectas
+                                                @break
+                                            @case('duplicate_restaurant')
+                                                Este restaurante ya existe en nuestro directorio
+                                                @break
+                                            @case('other_reason')
+                                                Otros motivos (ver notas adicionales)
+                                                @break
+                                        @endswitch
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if($latestRejection->notes)
+                                <div class="alert alert-secondary mb-2">
+                                    <strong>Notas del administrador:</strong><br>
+                                    {{ $latestRejection->notes }}
+                                </div>
+                            @endif
+                            <div class="mt-3">
+                                <a href="{{ route('restaurants.edit', $rejectedRestaurant) }}" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-pencil me-1"></i>Corregir y Reenviar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                @endif
+            @endforeach
 
             @if($restaurants->count() > 0)
                 <div class="row">
@@ -77,7 +141,7 @@
 
                 <!-- Paginación -->
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $restaurants->links() }}
+                    {{ $restaurants->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 <div class="text-center py-5">

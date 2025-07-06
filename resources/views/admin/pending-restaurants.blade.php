@@ -54,6 +54,7 @@
                     <span class="badge bg-warning">{{ ucfirst($restaurant->status) }}</span>
                 </div>
                 
+                @if($restaurant->primary_photo_url)
                 <div class="position-relative">
                     <img src="{{ $restaurant->primary_photo_url }}" 
                          class="card-img-top" 
@@ -135,12 +136,25 @@
                 <div class="card-footer bg-transparent">
                     <div class="d-flex gap-2">
                         <!-- View Details -->
-                        <a href="{{ route('restaurants.show', $restaurant) }}" 
-                           class="btn btn-outline-info flex-fill" 
-                           target="_blank">
+                        <button type="button" 
+                                class="btn btn-outline-info flex-fill"
+                                data-bs-toggle="modal"
+                                data-bs-target="#reviewModal"
+                                data-restaurant-id="{{ $restaurant->id }}"
+                                data-restaurant-name="{{ $restaurant->name }}"
+                                data-restaurant-description="{{ $restaurant->description }}"
+                                data-restaurant-address="{{ $restaurant->address }}"
+                                data-restaurant-phone="{{ $restaurant->phone }}"
+                                data-restaurant-email="{{ $restaurant->email }}"
+                                data-restaurant-website="{{ $restaurant->website }}"
+                                data-restaurant-price-range="{{ $restaurant->price_range }}"
+                                data-restaurant-categories="{{ $restaurant->categories->pluck('name')->implode(', ') }}"
+                                data-restaurant-images="{{ implode(',', $restaurant->images ?? []) }}"
+                                data-restaurant-owner="{{ $restaurant->user->name }}"
+                                data-restaurant-owner-email="{{ $restaurant->user->email }}">
                             <i class="bi bi-eye me-1"></i>
                             Ver Detalles
-                        </a>
+                        </button>
                         
                         <!-- Approve -->
                         <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="flex-fill approve-form">
@@ -177,7 +191,7 @@
     <div class="row mt-4">
         <div class="col-12">
             <div class="d-flex justify-content-center">
-                {{ $restaurants->links() }}
+                {{ $restaurants->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
@@ -233,29 +247,315 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Confirmación para rechazar con SweetAlert2
+    // Modal de rechazo con checks
     document.querySelectorAll('.reject-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const form = this.closest('form');
             const restaurantName = this.dataset.restaurant;
             
-            Swal.fire({
-                title: '¿Rechazar restaurante?',
-                text: `¿Está seguro de que desea rechazar "${restaurantName}"? Esta acción no se puede deshacer.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, rechazar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+            // Configurar el modal de rechazo
+            document.getElementById('rejectModalTitle').textContent = `Rechazar: ${restaurantName}`;
+            document.getElementById('rejectForm').action = form.action;
+            
+            // Limpiar selecciones previas
+            document.querySelectorAll('#rejectModal input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
             });
+            document.getElementById('rejection_notes').value = '';
+            
+            // Ocultar mensajes de error previos
+            const errorDiv = document.getElementById('rejection-error');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // Mostrar el modal
+            const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+            rejectModal.show();
         });
+    });
+    
+    // Validación del formulario de rechazo
+    document.getElementById('rejectForm').addEventListener('submit', function(e) {
+        const checkboxes = document.querySelectorAll('#rejectModal input[type="checkbox"]:checked');
+        
+        if (checkboxes.length === 0) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('rejection-error');
+            errorDiv.textContent = 'Debe seleccionar al menos una razón de rechazo.';
+            errorDiv.style.display = 'block';
+            return false;
+        }
+        
+        // Ocultar mensaje de error si la validación pasa
+        const errorDiv = document.getElementById('rejection-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
     });
 });
 </script>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalTitle">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Rechazar Restaurante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <div class="alert alert-danger" id="rejection-error" style="display: none;"></div>
+                    
+                    <p class="mb-3">Seleccione las razones por las cuales está rechazando este restaurante:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[name_invalid]" id="name_invalid">
+                                <label class="form-check-label" for="name_invalid">
+                                    Nombre inválido o inapropiado
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[description_invalid]" id="description_invalid">
+                                <label class="form-check-label" for="description_invalid">
+                                    Descripción inadecuada
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[address_invalid]" id="address_invalid">
+                                <label class="form-check-label" for="address_invalid">
+                                    Dirección incorrecta o incompleta
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[contact_invalid]" id="contact_invalid">
+                                <label class="form-check-label" for="contact_invalid">
+                                    Información de contacto inválida
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[photos_missing]" id="photos_missing">
+                                <label class="form-check-label" for="photos_missing">
+                                    Faltan fotos o son inadecuadas
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[categories_invalid]" id="categories_invalid">
+                                <label class="form-check-label" for="categories_invalid">
+                                    Categorías incorrectas
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[duplicate_restaurant]" id="duplicate_restaurant">
+                                <label class="form-check-label" for="duplicate_restaurant">
+                                    Restaurante duplicado
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[other_reason]" id="other_reason">
+                                <label class="form-check-label" for="other_reason">
+                                    Otra razón
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="rejection_notes" class="form-label">Notas adicionales (opcional):</label>
+                        <textarea class="form-control" id="rejection_notes" name="notes" rows="3" placeholder="Proporcione detalles adicionales sobre el rechazo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-lg me-1"></i>
+                        Rechazar Restaurante
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">
+                    <i class="bi bi-eye me-2"></i>
+                    Revisar Restaurante: <span id="modalRestaurantName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Información del Propietario -->
+                    <div class="col-12 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-person me-2"></i>
+                                    Información del Propietario
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Nombre:</strong>
+                                        <p id="modalOwnerName" class="mb-2"></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Email:</strong>
+                                        <p id="modalOwnerEmail" class="mb-2"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información del Restaurante -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-shop me-2"></i>
+                                    Detalles del Restaurante
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Descripción:</strong>
+                                        <p id="modalDescription" class="text-muted"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Dirección:</strong>
+                                        <p id="modalAddress"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Teléfono:</strong>
+                                        <p id="modalPhone"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Email:</strong>
+                                        <p id="modalEmail"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Sitio Web:</strong>
+                                        <p id="modalWebsite"></p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Rango de Precios:</strong>
+                                        <p id="modalPriceRange"></p>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <strong>Categorías:</strong>
+                                        <p id="modalCategories"></p>
+                                    </div>
+                                    <div class="col-12">
+                                        <strong>Imágenes:</strong>
+                                        <div id="modalImages" class="mt-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cerrar
+                </button>
+                <a id="modalViewPublic" href="#" target="_blank" class="btn btn-info">
+                    <i class="bi bi-eye me-1"></i>
+                    Ver Página Pública
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle review modal
+const reviewModal = document.getElementById('reviewModal');
+if (reviewModal) {
+    reviewModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        
+        // Obtener datos del botón
+        const restaurantId = button.getAttribute('data-restaurant-id');
+        const restaurantName = button.getAttribute('data-restaurant-name');
+        const description = button.getAttribute('data-restaurant-description');
+        const address = button.getAttribute('data-restaurant-address');
+        const phone = button.getAttribute('data-restaurant-phone');
+        const email = button.getAttribute('data-restaurant-email');
+        const website = button.getAttribute('data-restaurant-website');
+        const priceRange = button.getAttribute('data-restaurant-price-range');
+        const categories = button.getAttribute('data-restaurant-categories');
+        const images = button.getAttribute('data-restaurant-images');
+        const ownerName = button.getAttribute('data-restaurant-owner');
+        const ownerEmail = button.getAttribute('data-restaurant-owner-email');
+        
+        // Actualizar contenido del modal
+        document.getElementById('modalRestaurantName').textContent = restaurantName;
+        document.getElementById('modalOwnerName').textContent = ownerName;
+        document.getElementById('modalOwnerEmail').textContent = ownerEmail;
+        document.getElementById('modalDescription').textContent = description || 'No especificada';
+        document.getElementById('modalAddress').textContent = address || 'No especificada';
+        document.getElementById('modalPhone').textContent = phone || 'No especificado';
+        document.getElementById('modalEmail').textContent = email || 'No especificado';
+        document.getElementById('modalWebsite').textContent = website || 'No especificado';
+        
+        // Formatear rango de precios
+        let priceRangeText = 'No especificado';
+        if (priceRange) {
+            switch(priceRange) {
+                case '1': priceRangeText = '$ - Económico'; break;
+                case '2': priceRangeText = '$$ - Moderado'; break;
+                case '3': priceRangeText = '$$$ - Caro'; break;
+                case '4': priceRangeText = '$$$$ - Muy Caro'; break;
+            }
+        }
+        document.getElementById('modalPriceRange').textContent = priceRangeText;
+        
+        document.getElementById('modalCategories').textContent = categories || 'No especificadas';
+        
+        // Manejar imágenes
+        const imagesContainer = document.getElementById('modalImages');
+        if (images && images.trim() !== '') {
+            const imageUrls = images.split(',').filter(url => url.trim() !== '');
+            if (imageUrls.length > 0) {
+                imagesContainer.innerHTML = imageUrls.map(url => 
+                    `<img src="${url.trim()}" class="img-thumbnail me-2 mb-2" style="width: 100px; height: 100px; object-fit: cover;" alt="Imagen del restaurante">`
+                ).join('');
+            } else {
+                imagesContainer.innerHTML = '<p class="text-muted">No hay imágenes</p>';
+            }
+        } else {
+            imagesContainer.innerHTML = '<p class="text-muted">No hay imágenes</p>';
+        }
+        
+        // Actualizar enlace a página pública
+        const publicLink = document.getElementById('modalViewPublic');
+        publicLink.href = `/restaurants/${restaurantId}`;
+    });
+}
+</script>
+
 @endpush

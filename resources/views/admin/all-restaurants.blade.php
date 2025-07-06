@@ -296,7 +296,7 @@
     <div class="row mt-4">
         <div class="col-12">
             <div class="d-flex justify-content-center">
-                {{ $restaurants->appends(request()->query())->links() }}
+                {{ $restaurants->appends(request()->query())->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
@@ -326,25 +326,120 @@
 
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="rejectModalLabel">Rechazar Restaurante</h5>
+                <h5 class="modal-title" id="rejectModalLabel">
+                    <i class="bi bi-x-circle me-2"></i>
+                    Rechazar Restaurante: <span id="rejectRestaurantName"></span>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="rejectForm" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="modal-body">
-                    <p>¿Está seguro de que desea rechazar el restaurante <strong id="rejectRestaurantName"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Seleccione los motivos específicos del rechazo:</strong>
+                        <br><small>El propietario recibirá una notificación detallada con los campos que debe corregir.</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">Campos Obligatorios</h6>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[name_invalid]" id="nameInvalid" value="1">
+                                <label class="form-check-label" for="nameInvalid">
+                                    <i class="bi bi-shop me-1"></i> Nombre del restaurante
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[description_invalid]" id="descriptionInvalid" value="1">
+                                <label class="form-check-label" for="descriptionInvalid">
+                                    <i class="bi bi-file-text me-1"></i> Descripción
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[address_invalid]" id="addressInvalid" value="1">
+                                <label class="form-check-label" for="addressInvalid">
+                                    <i class="bi bi-geo-alt me-1"></i> Dirección
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[phone_invalid]" id="phoneInvalid" value="1">
+                                <label class="form-check-label" for="phoneInvalid">
+                                    <i class="bi bi-telephone me-1"></i> Teléfono
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[email_invalid]" id="emailInvalid" value="1">
+                                <label class="form-check-label" for="emailInvalid">
+                                    <i class="bi bi-envelope me-1"></i> Email
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3">Contenido y Multimedia</h6>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[categories_missing]" id="categoriesMissing" value="1">
+                                <label class="form-check-label" for="categoriesMissing">
+                                    <i class="bi bi-tags me-1"></i> Categorías faltantes
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[photos_missing]" id="photosMissing" value="1">
+                                <label class="form-check-label" for="photosMissing">
+                                    <i class="bi bi-images me-1"></i> Fotos faltantes
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[website_invalid]" id="websiteInvalid" value="1">
+                                <label class="form-check-label" for="websiteInvalid">
+                                    <i class="bi bi-globe me-1"></i> Sitio web inválido
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="rejection_checks[hours_invalid]" id="hoursInvalid" value="1">
+                                <label class="form-check-label" for="hoursInvalid">
+                                    <i class="bi bi-clock me-1"></i> Horarios incorrectos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
                     <div class="mb-3">
-                        <label for="rejectionReason" class="form-label">Razón del rechazo <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="rejectionReason" name="rejection_reason" rows="3" required placeholder="Explique por qué se rechaza este restaurante..."></textarea>
+                        <label for="rejectionNotes" class="form-label">
+                            <i class="bi bi-chat-text me-1"></i> Notas adicionales (opcional)
+                        </label>
+                        <textarea class="form-control" id="rejectionNotes" name="notes" rows="3" placeholder="Agregue comentarios adicionales o instrucciones específicas..."></textarea>
+                        <div class="form-text">Estas notas aparecerán junto con los motivos específicos en la notificación al propietario.</div>
+                    </div>
+                    
+                    <div id="rejectionError" class="alert alert-danger d-none">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Debe seleccionar al menos un motivo de rechazo.
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Rechazar Restaurante</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="rejectSubmitBtn">
+                        <i class="bi bi-x-circle me-1"></i> Rechazar Restaurante
+                    </button>
                 </div>
             </form>
         </div>
@@ -380,81 +475,9 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/admin-actions.js') }}"></script>
 <script>
-// SweetAlert confirmations
-function confirmApprove(event, restaurantName, actionUrl) {
-    event.preventDefault();
-    
-    Swal.fire({
-        title: '¿Aprobar restaurante?',
-        text: `¿Está seguro de que desea aprobar "${restaurantName}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, aprobar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Create and submit form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = actionUrl;
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            const methodField = document.createElement('input');
-            methodField.type = 'hidden';
-            methodField.name = '_method';
-            methodField.value = 'PATCH';
-            
-            form.appendChild(csrfToken);
-            form.appendChild(methodField);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
-
-function confirmReactivate(event, restaurantName, actionUrl) {
-    event.preventDefault();
-    
-    Swal.fire({
-        title: '¿Reactivar restaurante?',
-        text: `¿Está seguro de que desea reactivar "${restaurantName}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, reactivar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Create and submit form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = actionUrl;
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            const methodField = document.createElement('input');
-            methodField.type = 'hidden';
-            methodField.name = '_method';
-            methodField.value = 'PATCH';
-            
-            form.appendChild(csrfToken);
-            form.appendChild(methodField);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
+// Las funciones confirmApprove y confirmReactivate están disponibles en admin-actions.js
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -472,9 +495,34 @@ document.addEventListener('DOMContentLoaded', function() {
             form.action = `/admin/restaurants/${restaurantId}/reject`;
             nameElement.textContent = restaurantName;
             
-            // Clear previous reason
-            document.getElementById('rejectionReason').value = '';
+            // Clear previous selections
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            
+            // Clear notes
+            document.getElementById('rejectionNotes').value = '';
+            
+            // Hide error message
+            document.getElementById('rejectionError').classList.add('d-none');
         });
+        
+        // Handle form submission with validation
+        const rejectForm = document.getElementById('rejectForm');
+        if (rejectForm) {
+            rejectForm.addEventListener('submit', function(event) {
+                const checkboxes = this.querySelectorAll('input[name^="rejection_checks"]:checked');
+                const errorDiv = document.getElementById('rejectionError');
+                
+                if (checkboxes.length === 0) {
+                    event.preventDefault();
+                    errorDiv.classList.remove('d-none');
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                } else {
+                    errorDiv.classList.add('d-none');
+                }
+            });
+        }
     }
     
     // Handle suspend modal

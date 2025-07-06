@@ -149,7 +149,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($restaurant->primaryPhoto)
-                                                <img src="{{ $restaurant->primaryPhoto->url }}" 
+                                                <img src="{{ $restaurant->primary_photo_url }}" 
                                                      class="rounded me-2" 
                                                      style="width: 40px; height: 40px; object-fit: cover;" 
                                                      alt="{{ $restaurant->name }}">
@@ -191,13 +191,13 @@
                                                title="Ver">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline">
+                                            <form method="POST" action="{{ route('admin.restaurants.approve', $restaurant) }}" class="d-inline approve-form">
                                                 @csrf
                                                 @method('PATCH')
                                                 <button type="submit" 
                                                         class="btn btn-outline-success" 
                                                         title="Aprobar"
-                                                        onclick="return confirm('¿Aprobar este restaurante?')">
+                                                        data-restaurant-name="{{ $restaurant->name }}">
                                                     <i class="bi bi-check"></i>
                                                 </button>
                                             </form>
@@ -227,3 +227,55 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Handle approve restaurant confirmation with SweetAlert
+document.addEventListener('DOMContentLoaded', function() {
+    const approveForms = document.querySelectorAll('.approve-form');
+    
+    approveForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const button = form.querySelector('button[type="submit"]');
+            const restaurantName = button.getAttribute('data-restaurant-name');
+            
+            Swal.fire({
+                title: '¿Aprobar restaurante?',
+                text: `¿Estás seguro de que quieres aprobar "${restaurantName}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, aprobar',
+                cancelButtonText: 'Cancelar',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading state
+                    Swal.fire({
+                        title: 'Aprobando...',
+                        text: 'Por favor espera mientras procesamos la aprobación.',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Submit the form
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
+@endpush

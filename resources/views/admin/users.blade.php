@@ -230,8 +230,12 @@
             
             <!-- Paginación -->
             @if($users->hasPages())
-            <div class="card-footer">
-                {{ $users->appends(request()->query())->links() }}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-center">
+                        {{ $users->appends(request()->query())->links('pagination::bootstrap-4') }}
+                    </div>
+                </div>
             </div>
             @endif
             @else
@@ -293,81 +297,9 @@
 @endpush
 
 @push('scripts')
+<script src="{{ asset('js/admin-actions.js') }}"></script>
 <script>
-// SweetAlert confirmations for users
-function confirmReactivateUser(event, userName, actionUrl) {
-    event.preventDefault();
-    
-    Swal.fire({
-        title: '¿Reactivar usuario?',
-        text: `¿Está seguro de que desea reactivar a "${userName}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#198754',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, reactivar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Create and submit form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = actionUrl;
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            const methodField = document.createElement('input');
-            methodField.type = 'hidden';
-            methodField.name = '_method';
-            methodField.value = 'PATCH';
-            
-            form.appendChild(csrfToken);
-            form.appendChild(methodField);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
-
-function confirmDeleteUser(event, userName, actionUrl) {
-    event.preventDefault();
-    
-    Swal.fire({
-        title: '¿Eliminar usuario?',
-        text: `¿Está seguro de que desea eliminar a "${userName}"? Esta acción no se puede deshacer.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Create and submit form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = actionUrl;
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
-            const methodField = document.createElement('input');
-            methodField.type = 'hidden';
-            methodField.name = '_method';
-            methodField.value = 'DELETE';
-            
-            form.appendChild(csrfToken);
-            form.appendChild(methodField);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
-}
+// Las funciones confirmReactivateUser y confirmDeleteUser están disponibles en admin-actions.js
 
 document.addEventListener('DOMContentLoaded', function() {
     

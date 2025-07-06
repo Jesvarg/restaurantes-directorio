@@ -96,6 +96,23 @@ class Restaurant extends Model
     }
 
     /**
+     * Un restaurante puede tener razones de rechazo
+     * Relación uno a muchos: hasMany(RestaurantRejectionReason::class)
+     */
+    public function rejectionReasons(): HasMany
+    {
+        return $this->hasMany(RestaurantRejectionReason::class);
+    }
+
+    /**
+     * Obtiene la última razón de rechazo
+     */
+    public function getLatestRejectionReason()
+    {
+        return $this->rejectionReasons()->latest()->first();
+    }
+
+    /**
      * Scope para restaurantes activos
      * Filtra solo restaurantes con status = 'approved'
      */
@@ -160,6 +177,16 @@ class Restaurant extends Model
     public function getPrimaryPhotoAttribute()
     {
         return $this->photos()->where('is_primary', true)->first();
+    }
+
+    /**
+     * Accessor para obtener la URL de la foto principal
+     * Retorna la URL de la primera foto marcada como principal
+     */
+    public function getPrimaryPhotoUrlAttribute()
+    {
+        $primaryPhoto = $this->primaryPhoto;
+        return $primaryPhoto ? $primaryPhoto->full_url : asset('images/placeholder-restaurant.svg');
     }
 
     /**

@@ -26,20 +26,20 @@ class StoreRestaurantRequest extends FormRequest
                 'required',
                 'string',
                 'min:3',
-                'max:255',
+                'max:30', // Limitado a 50 caracteres para mejor visualización
                 'regex:/^[\pL\s\-\.\d]+$/u', // Solo letras, espacios, guiones, puntos y números
             ],
             'description' => [
                 'nullable',
                 'string',
                 'min:10',
-                'max:1000',
+                'max:60',
             ],
             'address' => [
                 'required',
                 'string',
                 'min:10',
-                'max:500',
+                'max:60',
             ],
             'phone' => [
                 'nullable',
@@ -144,11 +144,11 @@ class StoreRestaurantRequest extends FormRequest
         return [
             'name.required' => 'El nombre del restaurante es obligatorio.',
             'name.min' => 'El nombre debe tener al menos 3 caracteres.',
-            'name.max' => 'El nombre no puede exceder 255 caracteres.',
+            'name.max' => 'El nombre no puede exceder 30 caracteres.',
             'name.regex' => 'El nombre solo puede contener letras, números, espacios, guiones y puntos.',
             
             'description.min' => 'La descripción debe tener al menos 10 caracteres.',
-            'description.max' => 'La descripción no puede exceder 1000 caracteres.',
+            'description.max' => 'La descripción no puede exceder 500 caracteres.',
             
             'address.required' => 'La dirección es obligatoria.',
             'address.min' => 'La dirección debe tener al menos 10 caracteres.',

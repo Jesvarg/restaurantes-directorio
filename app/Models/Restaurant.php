@@ -13,6 +13,24 @@ class Restaurant extends Model
 {
     use HasFactory;
 
+    // Constantes para estados del restaurante
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_ACTIVE = 'active';     // Mantener para compatibilidad
+    public const STATUS_INACTIVE = 'inactive'; // Mantener para compatibilidad
+
+    // Array de estados válidos
+    public const VALID_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_APPROVED,
+        self::STATUS_REJECTED,
+        self::STATUS_SUSPENDED,
+        self::STATUS_ACTIVE,
+        self::STATUS_INACTIVE,
+    ];
+
     /**
      * The attributes that are mass assignable.
      * Campos que pueden ser asignados masivamente
@@ -113,12 +131,52 @@ class Restaurant extends Model
     }
 
     /**
-     * Scope para restaurantes activos
+     * Scope para restaurantes activos/aprobados
      * Filtra solo restaurantes con status = 'approved'
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    /**
+     * Scope para restaurantes visibles públicamente
+     */
+    public function scopePublic($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    /**
+     * Verifica si el restaurante está aprobado
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    /**
+     * Verifica si el restaurante está pendiente
+     */
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Verifica si el restaurante está rechazado
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    /**
+     * Verifica si el restaurante está suspendido
+     */
+    public function isSuspended(): bool
+    {
+        return $this->status === self::STATUS_SUSPENDED;
     }
 
     /**

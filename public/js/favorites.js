@@ -26,11 +26,16 @@ function toggleFavorite(restaurantId) {
     }
 
     const favoriteBtn = document.querySelector(`[data-restaurant-id="${restaurantId}"]`);
+    if (!favoriteBtn) {
+        console.error('Botón de favorito no encontrado');
+        return;
+    }
+    
     const icon = favoriteBtn.querySelector('i');
     const originalIcon = icon.className;
     
-    // Mostrar estado de carga
-    icon.className = 'bi bi-arrow-repeat';
+    // Aplicar efecto splash con clase CSS
+    favoriteBtn.classList.add('splash-effect');
     favoriteBtn.disabled = true;
     
     // Realizar petición AJAX
@@ -38,61 +43,66 @@ function toggleFavorite(restaurantId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            // Actualizar el icono según el nuevo estado
+            // Actualizar UI
             if (data.is_favorite) {
-                icon.className = 'bi bi-heart-fill text-danger';
+                icon.className = 'bi bi-heart-fill';
+                favoriteBtn.className = favoriteBtn.className.replace('btn-outline-secondary', 'btn-outline-danger');
                 favoriteBtn.title = 'Quitar de favoritos';
-                
-                // Mostrar mensaje de éxito
-                showSuccessMessage(data.message);
             } else {
                 icon.className = 'bi bi-heart';
+                favoriteBtn.className = favoriteBtn.className.replace('btn-outline-danger', 'btn-outline-secondary');
                 favoriteBtn.title = 'Agregar a favoritos';
-                
-                // Mostrar notificación de eliminación
+            }
+            
+            // Mostrar mensaje de éxito
+            if (typeof showSuccessMessage === 'function') {
+                showSuccessMessage(data.message);
+            } else {
                 Swal.fire({
-                    icon: 'info',
-                    title: 'Eliminado de favoritos',
-                    text: 'El restaurante se eliminó de tu lista de favoritos.',
-                    timer: 2000,
-                    showConfirmButton: false,
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: data.message,
                     toast: true,
-                    position: 'top-end'
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
                 });
             }
         } else {
-            // Restaurar icono original en caso de error
-            icon.className = originalIcon;
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message || 'Ocurrió un error al procesar la solicitud.',
-                confirmButtonText: 'Entendido'
-            });
+            throw new Error(data.message || 'Error desconocido');
         }
     })
     .catch(error => {
         console.error('Error:', error);
         
-        // Restaurar icono original en caso de error
+        // Restaurar estado original en caso de error
         icon.className = originalIcon;
         
         Swal.fire({
             icon: 'error',
-            title: 'Error de conexión',
-            text: 'No se pudo conectar con el servidor. Inténtalo de nuevo.',
-            confirmButtonText: 'Entendido'
+            title: 'Error',
+            text: 'Hubo un problema al procesar tu solicitud. Inténtalo de nuevo.',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
         });
     })
     .finally(() => {
-        // Rehabilitar el botón
+        // Remover efecto splash y rehabilitar botón
+        favoriteBtn.classList.remove('splash-effect');
         favoriteBtn.disabled = false;
     });
 }
@@ -101,6 +111,33 @@ function toggleFavorite(restaurantId) {
  * Inicializar la funcionalidad de favoritos cuando el DOM esté listo
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // Agregar estilos CSS para el efecto splash
+    const style = document.createElement('style');
+    style.textContent = `
+        .splash-effect {
+            animation: splashAnimation 0.3s ease-out;
+        }
+        
+        @keyframes splashAnimation {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* Hover sutil opcional */
+        .btn[data-restaurant-id]:hover:not(:disabled) {
+            transform: scale(1.02);
+            transition: transform 0.1s ease;
+        }
+    `;
+    document.head.appendChild(style);
+    
     // Agregar event listeners a todos los botones de favoritos
     const favoriteButtons = document.querySelectorAll('[data-restaurant-id]');
     

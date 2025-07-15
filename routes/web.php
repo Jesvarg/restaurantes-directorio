@@ -39,19 +39,18 @@ Route::resource('restaurants', RestaurantController::class)->except(['destroy'])
 
 // Additional Restaurant Routes
 Route::middleware('auth')->group(function () {
-    // Favorite routes
-    Route::post('/restaurants/{restaurant}/favorite', [RestaurantController::class, 'toggleFavorite'])
-        ->name('restaurants.favorite');
     
     // Review routes
     Route::post('/restaurants/{restaurant}/reviews', [RestaurantController::class, 'storeReview'])
         ->name('restaurants.reviews.store');
+    
+    // Ruta para toggle de favoritos
+    Route::post('/restaurants/{restaurant}/toggle-favorite', [RestaurantController::class, 'toggleFavorite'])
+        ->name('restaurants.toggleFavorite');
 });
 
 // API Routes for AJAX requests
 Route::prefix('api')->middleware('auth')->group(function () {
-    Route::post('/restaurants/{restaurant}/favorite', [RestaurantController::class, 'toggleFavorite'])
-        ->name('api.restaurants.favorite');
     
     Route::post('/restaurants/{restaurant}/reviews', [RestaurantController::class, 'storeReview'])
         ->name('api.restaurants.reviews.store');

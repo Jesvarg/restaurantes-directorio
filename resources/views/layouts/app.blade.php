@@ -254,18 +254,6 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('restaurants.index') ? 'active' : '' }}" href="{{ route('restaurants.index') }}">
-                            <i class="bi bi-house me-1"></i>
-                            Inicio
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('restaurants.index') ? 'active' : '' }}" href="{{ route('restaurants.index') }}">
-                            <i class="bi bi-search me-1"></i>
-                            Buscar Restaurantes
-                        </a>
-                    </li>
                 </ul>
 
                 <ul class="navbar-nav">
@@ -393,8 +381,15 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
+    <!-- Global Scripts -->
+    <script src="{{ asset('js/form-utils.js') }}"></script>
+    <script src="{{ asset('js/favorites.js') }}"></script>
+
     <!-- Custom Scripts -->
     <script>
+        // Set global authentication status
+        window.isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+        
         // Scroll to top functionality
         const scrollToTopBtn = document.getElementById('scrollToTopBtn');
         

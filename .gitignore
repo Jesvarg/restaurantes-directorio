@@ -37,6 +37,7 @@ composer.phar
 /.vscode
 .DS_Store
 Thumbs.db
+.trae/*
 
 # Logs
 npm-debug.log

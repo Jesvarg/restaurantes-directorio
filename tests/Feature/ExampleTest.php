@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * Test que la aplicación funciona siguiendo redirecciones.
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        $response = $this->get('/');
+        $response = $this->followingRedirects()->get('/');
 
         $response->assertStatus(200);
+        $response->assertSee('Restaurantes'); // Verificar que contiene contenido esperado
     }
 }

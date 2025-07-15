@@ -208,13 +208,15 @@
                                     @if(Auth::user()->favorites()->where('restaurant_id', $restaurant->id)->exists())
                                         <button class="btn btn-outline-danger" 
                                                 onclick="toggleFavorite({{ $restaurant->id }})" 
-                                                id="favorite-btn-{{ $restaurant->id }}">
+                                                id="favorite-btn-{{ $restaurant->id }}"
+                                                data-restaurant-id="{{ $restaurant->id }}">
                                             <i class="bi bi-heart-fill"></i>
                                         </button>
                                     @else
                                         <button class="btn btn-outline-secondary" 
                                                 onclick="toggleFavorite({{ $restaurant->id }})" 
-                                                id="favorite-btn-{{ $restaurant->id }}">
+                                                id="favorite-btn-{{ $restaurant->id }}"
+                                                data-restaurant-id="{{ $restaurant->id }}">
                                             <i class="bi bi-heart"></i>
                                         </button>
                                     @endif

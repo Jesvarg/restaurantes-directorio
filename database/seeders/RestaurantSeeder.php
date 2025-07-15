@@ -34,7 +34,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 2,
                 'latitude' => 19.4326,
                 'longitude' => -99.1332,
-                'status' => 'active',
+                'status' => 'approved', // ✅ Ya está correcto
             ],
             [
                 'name' => 'Sushi Zen',
@@ -47,7 +47,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 4,
                 'latitude' => 19.4284,
                 'longitude' => -99.1276,
-                'status' => 'active',
+                'status' => 'approved',
             ],
             [
                 'name' => 'Pizzería Napoli',
@@ -60,7 +60,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 2,
                 'latitude' => 19.4247,
                 'longitude' => -99.1353,
-                'status' => 'active',
+                'status' => 'approved',
             ],
             [
                 'name' => 'Tacos El Güero',
@@ -72,7 +72,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 1,
                 'latitude' => 19.4355,
                 'longitude' => -99.1405,
-                'status' => 'active',
+                'status' => 'approved',
             ],
             [
                 'name' => 'Café Literario',
@@ -85,7 +85,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 1,
                 'latitude' => 19.4338,
                 'longitude' => -99.1370,
-                'status' => 'active',
+                'status' => 'approved',
             ],
             [
                 'name' => 'Mariscos La Perla',
@@ -97,7 +97,7 @@ class RestaurantSeeder extends Seeder
                 'price_range' => 2,
                 'latitude' => 19.4290,
                 'longitude' => -99.1420,
-                'status' => 'active',
+                'status' => 'approved',
             ],
         ];
 

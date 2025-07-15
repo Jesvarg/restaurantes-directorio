@@ -55,6 +55,7 @@
                                  <button class="btn {{ $isFavorite ? 'btn-danger' : 'btn-outline-secondary' }} btn-lg" 
                                          onclick="toggleFavorite({{ $restaurant->id }})" 
                                          id="favorite-btn"
+                                         data-restaurant-id="{{ $restaurant->id }}"
                                          title="{{ $isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos' }}">
                                      <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
                                  </button>

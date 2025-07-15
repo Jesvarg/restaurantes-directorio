@@ -302,34 +302,42 @@ class RestaurantController extends Controller
     }
 
     /**
-     * Alternar favorito
-     * POST /restaurants/{restaurant}/favorite
+     * Toggle favorite status for a restaurant
+     * POST /restaurants/{restaurant}/toggle-favorite
      */
     public function toggleFavorite(Restaurant $restaurant)
     {
         $user = Auth::user();
         
-        if ($user->favorites()->where('restaurant_id', $restaurant->id)->exists()) {
+        // Verificar si ya está en favoritos
+        $isFavorite = $user->favorites()->where('restaurant_id', $restaurant->id)->exists();
+        
+        if ($isFavorite) {
+            // Remover de favoritos
             $user->favorites()->detach($restaurant->id);
-            $message = 'Restaurante eliminado de favoritos';
-            $isFavorite = false;
+            $message = 'Restaurante removido de favoritos';
+            $action = 'removed';
         } else {
+            // Agregar a favoritos
             $user->favorites()->attach($restaurant->id);
             $message = 'Restaurante agregado a favoritos';
-            $isFavorite = true;
+            $action = 'added';
         }
         
-        if (request()->ajax() || request()->is('api/*')) {
+        // Si es una petición AJAX, devolver JSON
+        if (request()->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'favorited' => $isFavorite
+                'action' => $action,
+                'is_favorite' => !$isFavorite
             ]);
         }
         
+        // Si es una petición normal, redirigir con mensaje
         return back()->with('success', $message);
     }
-    
+
     /**
      * Guardar review
      * POST /restaurants/{restaurant}/reviews
